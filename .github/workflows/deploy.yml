@@ -29,10 +29,12 @@ jobs:
           ls -l frontend/src/pages/ScheduledTransactionsPage/
 
       - name: Install dependencies
-        run: npm install --prefix frontend
+        run: npm install
+        working-directory: frontend
 
       - name: Build
-        run: npm run build --prefix frontend
+        run: npm run build
+        working-directory: frontend
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
