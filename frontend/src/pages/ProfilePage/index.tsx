@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
@@ -66,8 +65,8 @@ const InputField: React.FC<any> = ({ id, label, ...props }) => (
 );
 
 // --- Main Component ---
-export function ProfilePage() {
-  const { session, user, fullName, loading: authLoading } = useAuth();
+export const ProfilePage = () => {
+  const { user, session, loading: authLoading } = useAuth();
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -237,9 +236,9 @@ export function ProfilePage() {
   }, [profile]);
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files || e.target.files.length === 0) return;
+    if (!e.target.files || e.target.files.length === 0 || !user) return;
     const file = e.target.files[0];
-    const filePath = `${user?.id}/${Math.random()}.${file.name.split('.').pop()}`;
+    const filePath = `${user.id}/${Math.random()}.${file.name.split('.').pop()}`;
     try {
       const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, file);
       if (uploadError) throw uploadError;
@@ -350,4 +349,4 @@ export function ProfilePage() {
       </div>
     </Layout>
   );
-}
+};

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../contexts/AuthContext/useAuth';
 import Layout from '../../components/Layout';
 import BudgetForm from '../../components/Budget/BudgetForm';
@@ -19,11 +19,8 @@ const BudgetPage: React.FC = () => {
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchBudgets();
-  }, []);
-
-  const fetchBudgets = async () => {
+  const fetchBudgets = useCallback(async () => {
+    if (!supabase) return;
     setLoading(true);
     const { data, error } = await supabase
       .from('budgets')
@@ -37,7 +34,11 @@ const BudgetPage: React.FC = () => {
       setBudgets(data || []);
     }
     setLoading(false);
-  };
+  }, [supabase]);
+
+  useEffect(() => {
+    fetchBudgets();
+  }, [fetchBudgets]);
 
   const handleBudgetCreated = () => {
     fetchBudgets();

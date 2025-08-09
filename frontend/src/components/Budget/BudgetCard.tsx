@@ -11,11 +11,6 @@ interface Budget {
   user_id: string;
 }
 
-interface Category {
-  id: string;
-  name: string;
-}
-
 interface BudgetCardProps {
   budget: Budget;
   onBudgetDeleted: () => void;
@@ -26,11 +21,11 @@ const BudgetCard: React.FC<BudgetCardProps> = ({ budget, onBudgetDeleted }) => {
   const [categoryName, setCategoryName] = useState('Carregando...');
   const [currentSpend, setCurrentSpend] = useState(0);
   const [loadingSpend, setLoadingSpend] = useState(true);
-  const [notifiedExceeded, setNotifiedExceeded] = useState(false);
 
   // Effect to fetch category name
   useEffect(() => {
     const fetchCategoryName = async () => {
+      if (!supabase) return;
       const { data, error } = await supabase
         .from('categories')
         .select('name')
@@ -50,7 +45,7 @@ const BudgetCard: React.FC<BudgetCardProps> = ({ budget, onBudgetDeleted }) => {
   // Effect to fetch current spend, dependent on categoryName
   useEffect(() => {
     const fetchCurrentSpend = async () => {
-      if (categoryName === 'Carregando...' || categoryName === 'Desconhecida') {
+      if (!supabase || categoryName === 'Carregando...' || categoryName === 'Desconhecida') {
         // Don't fetch if categoryName is not yet resolved or is unknown
         return;
       }
@@ -75,7 +70,7 @@ const BudgetCard: React.FC<BudgetCardProps> = ({ budget, onBudgetDeleted }) => {
     };
 
     fetchCurrentSpend();
-  }, [budget.category_id, budget.user_id, budget.start_date, budget.end_date, supabase]); // Depend on category_id and other budget properties
+  }, [budget.category_id, budget.user_id, budget.start_date, budget.end_date, supabase, categoryName]); // Depend on category_id and other budget properties
 
   // Effect to notify if budget is exceeded
   useEffect(() => {
@@ -89,6 +84,7 @@ const BudgetCard: React.FC<BudgetCardProps> = ({ budget, onBudgetDeleted }) => {
   }, [currentSpend, budget.budget_amount, loadingSpend, categoryName, budget.id]);
 
   const handleDelete = async () => {
+    if (!supabase) return;
     const { error } = await supabase
       .from('budgets')
       .delete()

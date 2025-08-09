@@ -1,14 +1,12 @@
 
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext/useAuth';
 import { useTheme } from '../../contexts/ThemeContext/useTheme';
 import { supabase } from '../../services/supabase';
 import toast from 'react-hot-toast';
 import { FiSun, FiMoon } from 'react-icons/fi';
 
 const Header: React.FC = () => {
-  const { user, fullName } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
 

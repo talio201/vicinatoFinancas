@@ -1,4 +1,4 @@
-import { useState, useEffect, ReactNode } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
 import { supabase } from '../../services/supabase';
 import { type Session, type User } from '@supabase/supabase-js';
 import { AuthContext } from './AuthContext';
@@ -58,6 +58,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const value = {
     session,
     user,
+    supabase,
     loading,
     fullName,
   };

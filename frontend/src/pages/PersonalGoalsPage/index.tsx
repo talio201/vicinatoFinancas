@@ -21,11 +21,11 @@ interface PersonalGoal {
 
 type FormInputs = {
   name: string;
-  target_amount: number;
+  target_amount: string;
 };
 
 type AddFundsFormInputs = {
-  amount: number;
+  amount: string;
 };
 
 const formatCurrency = (value: number) => `R$ ${value.toFixed(2).replace('.', ',')}`;
@@ -37,13 +37,13 @@ export function PersonalGoalsPage() {
   // State for Add Goal form
   const [addGoalFormData, setAddGoalFormData] = useState<FormInputs>({
     name: '',
-    target_amount: 0,
+    target_amount: '0',
   });
   const [addGoalFormErrors, setAddGoalFormErrors] = useState<Partial<FormInputs>>({});
 
   // State for Add Funds form
   const [addFundsFormData, setAddFundsFormData] = useState<AddFundsFormInputs>({
-    amount: 0,
+    amount: '0',
   });
   const [addFundsFormErrors, setAddFundsFormErrors] = useState<Partial<AddFundsFormInputs>>({});
 
@@ -73,9 +73,10 @@ export function PersonalGoalsPage() {
 
   // Validation for Add Goal form
   const validateAddGoalForm = (): boolean => {
-    const errors: Partial<FormInputs> = {};
+    const errors: Partial<Record<keyof FormInputs, string>> = {};
+    const parsedTargetAmount = parseFloat(addGoalFormData.target_amount);
     if (!addGoalFormData.name.trim()) errors.name = 'Nome da meta é obrigatório';
-    if (!addGoalFormData.target_amount || isNaN(addGoalFormData.target_amount) || addGoalFormData.target_amount <= 0) {
+    if (isNaN(parsedTargetAmount) || parsedTargetAmount <= 0) {
       errors.target_amount = 'Valor alvo deve ser positivo';
     }
     setAddGoalFormErrors(errors);
@@ -84,8 +85,9 @@ export function PersonalGoalsPage() {
 
   // Validation for Add Funds form
   const validateAddFundsForm = (): boolean => {
-    const errors: Partial<AddFundsFormInputs> = {};
-    if (!addFundsFormData.amount || isNaN(addFundsFormData.amount) || addFundsFormData.amount <= 0) {
+    const errors: Partial<Record<keyof AddFundsFormInputs, string>> = {};
+    const parsedAmount = parseFloat(addFundsFormData.amount);
+    if (isNaN(parsedAmount) || parsedAmount <= 0) {
       errors.amount = 'Valor é obrigatório e deve ser positivo';
     }
     setAddFundsFormErrors(errors);
@@ -118,7 +120,7 @@ export function PersonalGoalsPage() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({ ...newGoal, current_amount: 0 }),
+        body: JSON.stringify({ ...newGoal, target_amount: parseFloat(newGoal.target_amount), current_amount: 0 }),
       });
       if (!response.ok) {
         const errorData = await response.json();
@@ -130,19 +132,20 @@ export function PersonalGoalsPage() {
       toast.success('Meta pessoal adicionada com sucesso!');
       queryClient.invalidateQueries({ queryKey: ['personalGoals'] });
       setIsAddModalOpen(false);
-      setAddGoalFormData({ name: '', target_amount: 0 }); // Reset form
+      setAddGoalFormData({ name: '', target_amount: '0' }); // Reset form
       setAddGoalFormErrors({}); // Clear errors
     },
-    onError: (err) => {
+    onError: (err: Error) => {
       toast.error(`Erro: ${err.message}`);
     },
   });
 
   // Add funds to goal mutation
   const addFundsMutation = useMutation({
-    mutationFn: async ({ id, amount }: { id: string; amount: number }) => {
+    mutationFn: async ({ id, amount }: { id: string; amount: string }) => {
       if (!session || !selectedGoal) throw new Error('Autenticação necessária ou meta não selecionada.');
-      const updatedAmount = selectedGoal.current_amount + amount;
+      const parsedAmount = parseFloat(amount);
+      const updatedAmount = selectedGoal.current_amount + parsedAmount;
       const response = await fetch(`${API_BASE_URL}/api/personal-goals/${id}`, {
         method: 'PUT',
         headers: {
@@ -162,10 +165,10 @@ export function PersonalGoalsPage() {
       queryClient.invalidateQueries({ queryKey: ['personalGoals'] });
       setIsAddFundsModalOpen(false);
       setSelectedGoal(null);
-      setAddFundsFormData({ amount: 0 }); // Reset form
+      setAddFundsFormData({ amount: '0' }); // Reset form
       setAddFundsFormErrors({}); // Clear errors
     },
-    onError: (err) => {
+    onError: (err: Error) => {
       toast.error(`Erro: ${err.message}`);
     },
   });
@@ -252,7 +255,7 @@ export function PersonalGoalsPage() {
                     onClick={() => {
                       setSelectedGoal(goal);
                       setIsAddFundsModalOpen(true);
-                      setAddFundsFormData({ amount: 0 }); // Reset add funds form when opening modal
+                      setAddFundsFormData({ amount: '0' }); // Reset add funds form when opening modal
                       setAddFundsFormErrors({}); // Clear add funds errors
                     }}
                     className="p-2 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 transition duration-300"
@@ -275,7 +278,7 @@ export function PersonalGoalsPage() {
           <motion.button
             onClick={() => {
               setIsAddModalOpen(true);
-              setAddGoalFormData({ name: '', target_amount: 0 }); // Reset add goal form when opening modal
+              setAddGoalFormData({ name: '', target_amount: '0' }); // Reset add goal form when opening modal
               setAddGoalFormErrors({}); // Clear add goal errors
             }}
             className="bg-gray-100 dark:bg-gray-700 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 flex flex-col items-center justify-center text-gray-500 dark:text-gray-300 hover:border-blue-500 hover:text-blue-500 transition duration-300"

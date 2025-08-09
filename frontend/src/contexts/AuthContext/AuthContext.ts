@@ -1,9 +1,10 @@
 import { createContext } from 'react';
-import { type Session, type User } from '@supabase/supabase-js';
+import { type Session, type User, type SupabaseClient } from '@supabase/supabase-js';
 
 interface AuthContextType {
   session: Session | null;
   user: User | null;
+  supabase: SupabaseClient | null;
   loading: boolean;
   fullName: string | null;
 }

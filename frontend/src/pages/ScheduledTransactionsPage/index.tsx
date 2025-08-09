@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { FiEdit, FiTrash2, FiCalendar } from 'react-icons/fi';
@@ -11,24 +11,35 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001
 
 interface ScheduledTransaction {
   id: string;
-  user_id: string;
   type: 'income' | 'expense';
   amount: number;
-  category_id: string;
-  description?: string;
+  description: string;
   date: string;
-  status: 'scheduled' | 'completed' | 'cancelled';
-  created_at: string;
-  categories: { name: string } | null;
+  category_id: string;
+  status: string;
+  categories?: { name: string } | null;
 }
 
-type FormInputs = {
+interface Category {
+    id: string;
+    name: string;
+}
+
+interface FormInputs {
   type: 'income' | 'expense';
   amount: number;
   category_id: string;
   description: string;
   date: string;
-};
+}
+
+interface FormErrors {
+  type?: string;
+  amount?: string;
+  category_id?: string;
+  description?: string;
+  date?: string;
+}
 
 const formatCurrency = (value: number) => `R$ ${value.toFixed(2).replace('.', ',')}`;
 const formatDate = (dateString: string) => new Date(dateString).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -46,7 +57,7 @@ export function ScheduledTransactionsPage() {
     description: '',
     date: '',
   });
-  const [editFormErrors, setEditFormErrors] = useState<Partial<FormInputs>>({});
+  const [editFormErrors, setEditFormErrors] = useState<FormErrors>({});
 
   const handleEditInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { id, value } = e.target;
@@ -58,7 +69,7 @@ export function ScheduledTransactionsPage() {
   };
 
   const validateEditForm = (): boolean => {
-    const errors: Partial<FormInputs> = {};
+    const errors: FormErrors = {};
     if (!editFormData.type) errors.type = 'O tipo é obrigatório';
     if (!editFormData.amount || isNaN(editFormData.amount) || editFormData.amount <= 0) errors.amount = 'O valor deve ser positivo';
     if (!editFormData.category_id) errors.category_id = 'A categoria é obrigatória';
@@ -79,9 +90,7 @@ export function ScheduledTransactionsPage() {
       if (!response.ok) {
         throw new Error('Não foi possível buscar as transações agendadas.');
       }
-      const data = await response.json();
-      
-      return data;
+      return response.json();
     },
     enabled: !!session,
   });
@@ -130,7 +139,7 @@ export function ScheduledTransactionsPage() {
       setIsEditModalOpen(false);
       setSelectedTransaction(null);
     },
-    onError: (err) => {
+    onError: (err: Error) => {
       toast.error(`Erro: ${err.message}`);
     },
   });
@@ -151,7 +160,7 @@ export function ScheduledTransactionsPage() {
       toast.success('Transação agendada excluída com sucesso!');
       queryClient.invalidateQueries({ queryKey: ['scheduledTransactions'] });
     },
-    onError: (err) => {
+    onError: (err: Error) => {
       toast.error(`Erro: ${err.message}`);
     },
   });

@@ -21,6 +21,7 @@ const BudgetForm: React.FC<BudgetFormProps> = ({ onBudgetCreated }) => {
 
   React.useEffect(() => {
     const fetchCategories = async () => {
+      if (!supabase) return;
       const { data, error } = await supabase.from('categories').select('id, name');
       if (error) {
         console.error('Error fetching categories:', error.message);
@@ -41,7 +42,8 @@ const BudgetForm: React.FC<BudgetFormProps> = ({ onBudgetCreated }) => {
     },
     validationSchema: budgetFormSchema,
     onSubmit: async (values, { resetForm }) => {
-      const { data, error } = await supabase.from('budgets').insert(values).select().single();
+      if (!supabase) return;
+      const { error } = await supabase.from('budgets').insert(values).select().single();
 
       if (error) {
         console.error('Error creating budget:', error.message);

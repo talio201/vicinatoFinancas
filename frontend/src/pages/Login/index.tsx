@@ -3,7 +3,7 @@ import '../../styles/login-circles.css';
 import { supabase } from '../../services/supabase';
 import toast from 'react-hot-toast';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, type Variants } from 'framer-motion';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 
@@ -34,9 +34,13 @@ const LoginPage: React.FC = () => {
     },
   });
 
-  const formVariants = {
-    hidden: { opacity: 0, y: 50 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } },
+  const formVariants: Variants = {
+    hidden: { opacity: 0, y: -20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.5 },
+    },
   };
 
   return (

@@ -17,6 +17,10 @@ type FormInputs = {
   date: string;
 };
 
+interface Transaction extends FormInputs {
+  id: string;
+}
+
 const transactionSchema = Yup.object().shape({
   type: Yup.string().oneOf(['income', 'expense']).required('O tipo é obrigatório'),
   amount: Yup.number().positive('O valor deve ser positivo').required('O valor é obrigatório'),
@@ -46,8 +50,9 @@ export function NovaTransacaoPage() {
     },
     validationSchema: transactionSchema,
     onSubmit: (values) => {
-      console.log('Submitting values:', values);
-      createTransactionMutation.mutate(values);
+      const typedValues = { ...values, type: values.type as 'income' | 'expense' };
+      console.log('Submitting values:', typedValues);
+      createTransactionMutation.mutate(typedValues);
     },
   });
 

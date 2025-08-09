@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../contexts/AuthContext/useAuth';
 import Layout from '../../components/Layout';
 import toast from 'react-hot-toast';
@@ -29,7 +29,8 @@ const ReportsPage: React.FC = () => {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
-  const fetchExpensesByCategory = async () => {
+  const fetchExpensesByCategory = useCallback(async () => {
+    if (!supabase) return;
     setLoading(true);
     let url = '/api/reports/expenses-by-category';
     const params = new URLSearchParams();
@@ -42,9 +43,12 @@ const ReportsPage: React.FC = () => {
     }
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("User not authenticated");
+
       const response = await fetch(url, {
         headers: {
-          'Authorization': `Bearer ${supabase.auth.currentSession?.access_token}`,
+          'Authorization': `Bearer ${session.access_token}`,
         },
       });
 
@@ -59,11 +63,11 @@ const ReportsPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [supabase, startDate, endDate]);
 
   useEffect(() => {
     fetchExpensesByCategory();
-  }, [startDate, endDate]);
+  }, [fetchExpensesByCategory]);
 
   const chartData = {
     labels: Object.keys(expensesByCategory),
