@@ -1,0 +1,19 @@
+1. Módulo de Orçamento Abrangente:
+    *   Permitir que os usuários definam orçamentos para diferentes categorias (ex: alimentação, transporte, lazer).
+    *   Acompanhar o progresso do orçamento em tempo real, com alertas visuais para gastos excessivos.
+    *   Relatórios de desempenho do orçamento ao longo do tempo.
+
+2. Relatórios e Análises Financeiras Avançadas:
+    *   Gerar gráficos e relatórios visuais sobre padrões de gastos, fontes de renda e economia.
+    *   Análise de tendências mensais/anuais para ajudar os usuários a entenderem seus hábitos financeiros.
+    *   Comparativos entre períodos para identificar mudanças no comportamento financeiro.
+
+3. Categorização e Etiquetagem de Transações Aprimoradas:
+    *   Além da simples adição de transações, permitir que os usuários atribuam categorias e subcategorias personalizadas.
+    *   Adicionar a capacidade de etiquetar transações com tags personalizadas para filtragem e organização mais flexíveis.
+    *   Sugestões automáticas de categorias baseadas em transações anteriores.
+
+4. Sistema de Notificações:
+    *   Alertas para transações agendadas próximas ou vencidas.
+    *   Notificações quando um orçamento está prestes a ser excedido ou já foi excedido.
+    *   Alertas para atividades em contas compartilhadas (se aplicável ao `SharedView`).

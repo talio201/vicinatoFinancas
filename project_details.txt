@@ -1,0 +1,345 @@
+# Detalhes do Projeto Vicinato Finanças
+
+Este documento detalha a estrutura, tecnologias e esquema de banco de dados do projeto "Vicinato Finanças", um aplicativo de gestão financeira pessoal e para casais.
+
+## 1. Visão Geral do Projeto
+
+O Vicinato Finanças é uma aplicação full-stack projetada para ajudar usuários a gerenciar suas finanças pessoais e, opcionalmente, compartilhar e gerenciar finanças com um parceiro. Ele inclui funcionalidades para registrar transações (receitas e despesas), definir metas financeiras, gerenciar categorias e visualizar transações agendadas. A autenticação e o banco de dados são gerenciados pelo Supabase.
+
+## 2. Estrutura do Projeto
+
+O projeto é dividido em duas partes principais: `backend` e `frontend`.
+
+```
+vicinatoFinancas/
+├───schema.sql
+├───backend/
+│   ├───.env
+│   ├───babel.config.js
+│   ├───index.js
+│   ├───index.test.js
+│   ├───jest.config.js
+│   ├───package-lock.json
+│   ├───package.json
+│   └───node_modules/
+└───frontend/
+    ├───.env
+    ├───.gitignore
+    ├───babel.config.cjs
+    ├───eslint.config.js
+    ├───index.html
+    ├───jest.setup.ts
+    ├───package.json
+    ├───README.md
+    ├───tsconfig.app.json
+    ├───tsconfig.json
+    ├───tsconfig.node.json
+    ├───uno.config.ts
+    ├───vite.config.ts
+    ├───vitest.setup.ts
+    ├───node_modules/
+    ├───public/
+    │   └───vite.svg
+    └───src/
+        ├───App.tsx
+        ├───index.css
+        ├───main.tsx
+        ├───test-rhf.test.ts
+        ├───vite-env.d.ts
+        ├───assets/
+        │   └───react.svg
+        ├───components/
+        │   ├───Footer/
+        │   │   └───index.tsx
+        │   ├───Header/
+        │   │   └───index.tsx
+        │   ├───Layout/
+        │   │   └───index.tsx
+        │   ├───Modal/
+        │   │   └───index.tsx
+        │   ├───ProtectedRoute/
+        │   │   └───index.tsx
+        │   └───TransactionModal/
+        ├───contexts/
+        │   ├───AuthContext/
+        │   │   └───index.tsx
+        │   └───ThemeContext/
+        │       └───index.tsx
+        ├───hooks/
+        ├───pages/
+        │   ├───CoupleDashboardPage/
+        │   │   └───index.tsx
+        │   ├───CoupleFlow/
+        │   ├───Dashboard/
+        │   │   └───index.tsx
+        │   ├───LandingPage/
+        │   │   └───index.tsx
+        │   ├───Login/
+        │   │   └───index.tsx
+        │   ├───NovaTransacaoPage/
+        │   │   └───index.tsx
+        │   ├───PersonalGoalsPage/
+        │   │   └───index.tsx
+        │   ├───ProfilePage/
+        │   │   └───index.tsx
+        │   ├───Register/
+        │   │   └───index.tsx
+        │   ├───ScheduledTransactionsPage/
+        │   │   └───index.tsx
+        │   └───SharedView/
+        ├───services/
+        │   └───supabase.ts
+        └───utils/
+```
+
+## 3. Tecnologias Utilizadas
+
+### 3.1. Backend
+
+*   **Linguagem:** JavaScript (Node.js)
+*   **Framework:** Express.js
+*   **Banco de Dados/Autenticação:** Supabase (PostgreSQL)
+*   **Variáveis de Ambiente:** `dotenv`
+*   **CORS:** `cors`
+*   **Testes:** Jest, Supertest
+*   **Desenvolvimento:** Nodemon (para recarga automática)
+*   **Outros:** `@heroicons/react` (provavelmente para ícones no backend, o que é incomum, pode ser um resquício ou uso para alguma ferramenta de admin interna)
+
+### 3.2. Frontend
+
+*   **Linguagem:** TypeScript, JavaScript
+*   **Framework:** React
+*   **Build Tool:** Vite
+*   **Estilização:** UnoCSS
+*   **Gerenciamento de Estado/Dados:** `@tanstack/react-query`
+*   **Roteamento:** `react-router-dom`
+*   **Formulários:** `react-hook-form`
+*   **Gráficos:** `recharts`
+*   **Animações:** `framer-motion`
+*   **Notificações:** `react-hot-toast`
+*   **Ícones:** `react-icons`, `@heroicons/react`
+*   **Componentes UI:** `@headlessui/react`
+*   **Testes:** Vitest, `@testing-library/jest-dom`
+*   **Linting:** ESLint, TypeScript ESLint
+
+## 4. Esquema do Banco de Dados (Supabase/PostgreSQL)
+
+O arquivo `schema.sql` define as tabelas, funções, triggers, políticas de Row Level Security (RLS) e configurações de armazenamento.
+
+### 4.1. Tabelas
+
+*   **`profiles`**: Armazena informações adicionais do perfil do usuário.
+    *   `id` (UUID): Chave primária, referencia `auth.users(id)`.
+    *   `full_name` (TEXT)
+    *   `avatar_url` (TEXT)
+    *   `phone_number` (TEXT)
+    *   `address` (TEXT)
+    *   `birth_date` (DATE)
+
+*   **`transactions`**: Registra todas as transações financeiras (receitas/despesas).
+    *   `id` (UUID): Chave primária, gerado automaticamente.
+    *   `user_id` (UUID): Referencia `auth.users(id)`, NOT NULL.
+    *   `type` (VARCHAR(7)): 'income' ou 'expense', NOT NULL.
+    *   `amount` (REAL): Valor da transação, NOT NULL.
+    *   `category` (VARCHAR(50)): Categoria da transação, NOT NULL.
+    *   `description` (TEXT)
+    *   `date` (TIMESTAMPTZ): Data da transação, DEFAULT NOW().
+    *   `created_at` (TIMESTAMPTZ): Data de criação do registro, DEFAULT NOW().
+
+*   **`categories`**: Define categorias de transações.
+    *   `id` (UUID): Chave primária, gerado automaticamente.
+    *   `name` (VARCHAR(50)): Nome da categoria, NOT NULL, UNIQUE.
+    *   `user_id` (UUID): Referencia `auth.users(id)`, pode ser NULL (para categorias globais).
+
+*   **`goals`**: Metas financeiras mensais por categoria.
+    *   `id` (UUID): Chave primária, gerado automaticamente.
+    *   `user_id` (UUID): Referencia `auth.users(id)`, NOT NULL.
+    *   `category` (VARCHAR(50)): Categoria da meta, NOT NULL.
+    *   `amount` (REAL): Valor da meta, NOT NULL.
+    *   `month` (DATE): Mês da meta, NOT NULL.
+    *   `created_at` (TIMESTAMPTZ): Data de criação, DEFAULT NOW().
+    *   `UNIQUE(user_id, category, month)`: Garante uma meta única por usuário, categoria e mês.
+
+*   **`personal_goals`**: Metas financeiras pessoais de longo prazo.
+    *   `id` (UUID): Chave primária, gerado automaticamente.
+    *   `user_id` (UUID): Referencia `auth.users(id)`, NOT NULL.
+    *   `name` (TEXT): Nome da meta, NOT NULL.
+    *   `target_amount` (REAL): Valor alvo, NOT NULL.
+    *   `current_amount` (REAL): Valor atual, DEFAULT 0, NOT NULL.
+    *   `created_at` (TIMESTAMPTZ): Data de criação, DEFAULT NOW().
+    *   `updated_at` (TIMESTAMPTZ): Data da última atualização, DEFAULT NOW().
+
+*   **`scheduled_transactions`**: Transações que ocorrerão no futuro.
+    *   `id` (UUID): Chave primária, gerado automaticamente.
+    *   `user_id` (UUID): Referencia `auth.users(id)`, NOT NULL.
+    *   `type` (VARCHAR(7)): 'income' ou 'expense', NOT NULL.
+    *   `amount` (REAL): Valor da transação, NOT NULL.
+    *   `category` (VARCHAR(50)): Categoria da transação, NOT NULL.
+    *   `description` (TEXT)
+    *   `date` (TIMESTAMPTZ): Data agendada, NOT NULL.
+    *   `status` (VARCHAR(20)): 'scheduled', DEFAULT 'scheduled', NOT NULL.
+    *   `created_at` (TIMESTAMPTZ): Data de criação, DEFAULT NOW().
+
+*   **`couple_relationships`**: Gerencia relacionamentos entre usuários para finanças compartilhadas.
+    *   `id` (UUID): Chave primária, gerado automaticamente.
+    *   `user1_id` (UUID): Referencia `auth.users(id)`, NOT NULL.
+    *   `user2_id` (UUID): Referencia `auth.users(id)`, NOT NULL.
+    *   `status` (VARCHAR(20)): 'pending', 'accepted', 'rejected', DEFAULT 'pending', NOT NULL.
+    *   `created_at` (TIMESTAMPTZ): Data de criação, DEFAULT NOW().
+    *   `updated_at` (TIMESTAMPTZ): Data da última atualização, DEFAULT NOW().
+    *   `UNIQUE(user1_id, user2_id)`: Garante um relacionamento único entre dois usuários.
+
+### 4.2. Funções e Triggers
+
+*   **`handle_new_user()`**: Função PL/pgSQL que cria um novo perfil na tabela `profiles` quando um novo usuário é criado em `auth.users`.
+*   **`on_auth_user_created`**: Trigger que executa `handle_new_user()` após a inserção de um novo usuário em `auth.users`.
+*   **`update_updated_at_column()`**: Função PL/pgSQL que atualiza a coluna `updated_at` para `NOW()` em uma tabela.
+*   **`update_personal_goals_updated_at`**: Trigger que executa `update_updated_at_column()` antes de cada atualização na tabela `personal_goals`.
+
+### 4.3. Row Level Security (RLS)
+
+Todas as tabelas principais (`profiles`, `transactions`, `categories`, `goals`, `personal_goals`, `scheduled_transactions`, `couple_relationships`) têm RLS habilitado.
+
+*   **`profiles`**: Permite acesso de leitura individual (`auth.uid() = id`).
+*   **`transactions`**: Permite acesso total (ALL) às próprias transações (`user_id = auth.uid()`).
+*   **`categories`**: Permite acesso total (ALL) às categorias pessoais (`user_id = auth.uid()`) e categorias globais (`user_id IS NULL`).
+*   **`goals`**: Permite acesso total (ALL) às próprias metas (`user_id = auth.uid()`).
+*   **`personal_goals`**: Permite acesso total (ALL) às próprias metas pessoais (`user_id = auth.uid()`).
+*   **`scheduled_transactions`**: Permite acesso total (ALL) às próprias transações agendadas (`user_id = auth.uid()`).
+*   **`couple_relationships`**: Permite acesso total (ALL) aos relacionamentos onde o usuário é `user1_id` ou `user2_id`.
+
+### 4.4. Índices
+
+*   `idx_transactions_user_id` na tabela `transactions` (coluna `user_id`).
+*   `idx_transactions_date` na tabela `transactions` (coluna `date`).
+*   `idx_categories_user_id` na tabela `categories` (coluna `user_id`).
+*   `idx_goals_user_id_month` na tabela `goals` (colunas `user_id`, `month`).
+
+### 4.5. Dados Iniciais
+
+A tabela `categories` é populada com algumas categorias padrão (`Alimentação`, `Moradia`, `Transporte`, `Lazer`, `Saúde`, `Educação`, `Salário`, `Presentes`, `Outros`) se elas ainda não existirem.
+
+### 4.6. Supabase Realtime
+
+As seguintes tabelas estão configuradas para Realtime: `profiles`, `transactions`, `categories`, `goals`, `personal_goals`, `scheduled_transactions`, `couple_relationships`.
+
+### 4.7. Supabase Storage
+
+Um bucket de armazenamento chamado `avatars` é criado e configurado para ser público. Políticas de RLS são aplicadas para permitir acesso público de leitura, e inserção/atualização por usuários autenticados para seus próprios avatares.
+
+### 4.8. Funções Auxiliares (Supabase)
+
+O esquema inclui várias funções para obter informações do usuário autenticado (ID, email, role, metadata, etc.), o que é útil para RLS e lógica de aplicação.
+
+## 5. Configuração de Ambiente
+
+Ambos o backend e o frontend utilizam arquivos `.env` para variáveis de ambiente.
+
+### 5.1. Backend (`backend/.env`)
+
+Exemplo de `.env`:
+```
+SUPABASE_URL=sua_url_supabase
+SUPABASE_ANON_KEY=sua_chave_anon_supabase
+PORT=3001
+```
+
+### 5.2. Frontend (`frontend/.env`)
+
+Exemplo de `.env`:
+```
+VITE_SUPABASE_URL=sua_url_supabase
+VITE_SUPABASE_ANON_KEY=sua_chave_anon_supabase
+```
+
+**Observação:** As chaves e URLs do Supabase devem ser obtidas no painel do seu projeto Supabase.
+
+## 6. Como Recriar e Rodar o Projeto
+
+### 6.1. Pré-requisitos
+
+*   Node.js (versão 18 ou superior recomendada)
+*   npm ou yarn
+*   Uma conta Supabase e um projeto configurado.
+
+### 6.2. Configuração do Banco de Dados (Supabase)
+
+1.  Crie um novo projeto no Supabase.
+2.  No painel do Supabase, vá para "SQL Editor" e execute o conteúdo do arquivo `schema.sql`. Isso criará todas as tabelas, funções, triggers e políticas de RLS necessárias.
+3.  Vá para "Settings" -> "API" para obter sua `Project URL` e `anon public` key.
+
+### 6.3. Configuração do Backend
+
+1.  Navegue até o diretório `backend`:
+    ```bash
+    cd backend
+    ```
+2.  Instale as dependências:
+    ```bash
+    npm install
+    # ou yarn install
+    ```
+3.  Crie um arquivo `.env` na raiz do diretório `backend` e adicione suas credenciais Supabase e a porta:
+    ```
+    SUPABASE_URL=sua_url_supabase
+    SUPABASE_ANON_KEY=sua_chave_anon_supabase
+    PORT=3001
+    ```
+4.  Inicie o servidor de desenvolvimento:
+    ```bash
+    npm run dev
+    # ou yarn dev
+    ```
+    O servidor estará rodando em `http://localhost:3001` (ou na porta que você configurou).
+
+### 6.4. Configuração do Frontend
+
+1.  Navegue até o diretório `frontend`:
+    ```bash
+    cd frontend
+    ```
+2.  Instale as dependências:
+    ```bash
+    npm install
+    # ou yarn install
+    ```
+3.  Crie um arquivo `.env` na raiz do diretório `frontend` e adicione suas credenciais Supabase:
+    ```
+    VITE_SUPABASE_URL=sua_url_supabase
+    VITE_SUPABASE_ANON_KEY=sua_chave_anon_supabase
+    ```
+4.  Inicie o servidor de desenvolvimento:
+    ```bash
+    npm run dev
+    # ou yarn dev
+    ```
+    O aplicativo frontend estará rodando em `http://localhost:5173` (ou na porta padrão do Vite).
+
+### 6.5. Executando Testes
+
+*   **Backend:**
+    ```bash
+    cd backend
+    npm test
+    # ou yarn test
+    ```
+*   **Frontend:**
+    ```bash
+    cd frontend
+    npm test
+    # ou yarn test
+    # Para testes com UI: npm run test:ui ou yarn test:ui
+    ```
+
+## 7. Funcionalidades Chave (Inferidas)
+
+*   **Autenticação de Usuários:** Login, registro e gerenciamento de perfil via Supabase Auth.
+*   **Gestão de Transações:** Adicionar, visualizar e categorizar receitas e despesas.
+*   **Metas Financeiras:** Definir e acompanhar metas mensais e pessoais.
+*   **Transações Agendadas:** Gerenciar pagamentos e recebimentos futuros.
+*   **Recursos para Casais:** Funcionalidade para compartilhar e gerenciar finanças em conjunto.
+*   **Visualização de Dados:** Dashboards com gráficos (Recharts) para análise financeira.
+*   **Componentes Reutilizáveis:** Estrutura de componentes bem definida (Footer, Header, Layout, Modal, etc.).
+*   **Contextos Globais:** Gerenciamento de autenticação e tema via React Context.
+*   **Gerenciamento de Estado Assíncrono:** Uso de React Query para lidar com dados do servidor.
+*   **Validação de Formulários:** `react-hook-form` para formulários robustos.
