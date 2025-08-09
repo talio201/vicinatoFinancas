@@ -23,6 +23,11 @@ jobs:
           rm -rf frontend/node_modules
           rm -rf frontend/dist
 
+      - name: Debug paths
+        run: |
+          pwd
+          ls -l frontend/src/pages/ScheduledTransactionsPage/
+
       - name: Install dependencies
         run: npm install --prefix frontend
 
