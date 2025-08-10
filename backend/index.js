@@ -24,6 +24,7 @@ const port = process.env.PORT || 3001;
 
 // --- Configuração de Segurança ---
 const allowedOrigins = [
+  'https://talio201.github.io'
   // Adicione aqui a URL do seu frontend em produção
   // Ex: 'https://meu-app-financeiro.com'
 ];
