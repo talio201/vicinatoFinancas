@@ -9,8 +9,12 @@ O Vicinato Finanças é uma aplicação web moderna para gerenciamento de finan�
 - **Metas Financeiras:** Crie metas de gastos mensais por categoria e metas de economia pessoais.
 - **Transações Agendadas:** Agende transações futuras para um planejamento financeiro mais preciso.
 - **Gerenciamento de Casal:** Envie um convite para um(a) parceiro(a) e compartilhe a visualização de transações e dashboards.
-- **Autenticação Segura:** Sistema de login e cadastro com confirmação por e-mail.
+- **Autenticação Segura:** Sistema de login e cadastro com confirmação por e-mail, e funcionalidade de redefinição de senha.
 - **Tema Claro e Escuro:** Interface adaptável para preferência de tema do usuário.
+- **Exportação de Dados:** Exporte suas transações para um arquivo CSV.
+- **Relatórios Avançados:** Visualize relatórios detalhados de despesas por categoria, receita vs. despesa ao longo do tempo e orçamento vs. real.
+- **Notificações em Tempo Real:** Receba notificações instantâneas sobre novas transações, orçamentos e relacionamentos de casal.
+- **Detecção de Anomalias (Hipotética):** Identifique padrões de gastos incomuns ou potenciais fraudes (requer integração com API de terceiros).
 
 ## 🚀 Stack de Tecnologias
 
@@ -21,6 +25,8 @@ O Vicinato Finanças é uma aplicação web moderna para gerenciamento de finan�
   - **Gerenciamento de Estado de Servidor:** TanStack Query
   - **Formulários:** Formik e Yup para validação
   - **Roteamento:** React Router
+  - **Gráficos:** React Chart.js 2
+  - **Deploy:** gh-pages
 
 - **Backend (BaaS):**
   - **Supabase:** Utilizado para banco de dados (PostgreSQL), autenticação e APIs de dados.
@@ -45,6 +51,7 @@ O Vicinato Finanças é uma aplicação web moderna para gerenciamento de finan�
 3.  Vá para **Settings** > **API** e copie os seguintes valores:
     - **Project URL**
     - **Project API keys** (a chave `anon` e a chave `service_role`)
+4.  **Habilitar Realtime:** Vá para **Database** > **Realtime** e habilite o Realtime para as tabelas `transactions`, `budgets` e `couple_relationships`.
 
 ### 2. Configurar o Backend
 
@@ -96,3 +103,63 @@ O Vicinato Finanças é uma aplicação web moderna para gerenciamento de finan�
         npm run dev
         ```
     -   A aplicação estará disponível em `http://localhost:5173` (ou outra porta, se a 5173 estiver em uso).
+
+## 🚀 Deploy do Projeto
+
+### Deploy do Backend (Vercel)
+
+1.  Certifique-se de ter o [Vercel CLI](https://vercel.com/docs/cli) instalado e configurado.
+2.  Na raiz do projeto, rode:
+    ```bash
+    vercel --prod
+    ```
+3.  Siga as instruções do Vercel CLI para vincular seu projeto e configurar as variáveis de ambiente do Supabase no Vercel.
+
+### Deploy do Frontend (GitHub Pages)
+
+1.  Certifique-se de ter o `gh-pages` instalado (`npm install gh-pages --save-dev` na pasta `frontend`).
+2.  Na pasta `frontend`, rode:
+    ```bash
+    npm run build
+    ```
+3.  Em seguida, rode:
+    ```bash
+    npm run deploy
+    ```
+    Isso fará o deploy da sua aplicação para `https://<seu-usuario>.github.io/<nome-do-repositorio>/`.
+
+## 🧪 Testes
+
+### Testes de Backend
+
+1.  Navegue até a pasta `backend`:
+    ```bash
+    cd backend
+    ```
+2.  Rode os testes:
+    ```bash
+    npm test
+    ```
+
+### Testes de Frontend
+
+1.  Navegue até a pasta `frontend`:
+    ```bash
+    cd frontend
+    ```
+2.  Rode os testes:
+    ```bash
+    npm test
+    ```
+    Para rodar os testes com interface de usuário:
+    ```bash
+    npm run test:ui
+    ```
+
+## 💡 Melhorias Futuras
+
+- **Integração com APIs Bancárias:** Conectar diretamente com contas bancárias para importação automática de transações.
+- **Categorização Inteligente:** Utilizar Machine Learning para sugerir ou categorizar transações automaticamente.
+- **Alertas Personalizados:** Notificações configuráveis para limites de gastos, metas alcançadas, etc.
+- **Relatórios Personalizados:** Permitir que os usuários criem seus próprios relatórios com base em critérios específicos.
+- **Gamificação:** Adicionar elementos de gamificação para incentivar hábitos financeiros saudáveis.
