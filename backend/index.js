@@ -740,6 +740,12 @@ app.get('/api/couple-dashboard', authenticate, async (req, res) => {
   }
 });
 
+// --- Middleware de Tratamento de Erros Global ---
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).send('Algo deu errado!');
+});
+
 // --- Inicialização do Servidor ---
 app.listen(port, () => {
   console.log(`Servidor rodando na porta ${port}`);
