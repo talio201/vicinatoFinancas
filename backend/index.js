@@ -284,6 +284,7 @@ app.get('/api/goals', authenticate, async (req, res) => {
         return res.status(400).json({ error: 'O parâmetro "month" é obrigatório.' });
     }
 
+    console.log('Supabase query for goals:', `from('goals').select('id, user_id, category_id, amount, month, created_at').eq('user_id', ${userId}).eq('month', ${month})`);
     const { data, error } = await req.supabase
         .from('goals')
         .select('id, user_id, category_id, amount, month, created_at')
