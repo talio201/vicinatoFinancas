@@ -64,8 +64,8 @@ const LandingPage: React.FC = () => {
 
       <section className="h-screen flex items-center justify-center text-center bg-cover bg-center" style={{ backgroundImage: "linear-gradient(to bottom, rgba(17, 24, 39, 0.9), rgba(17, 24, 39, 1)), url('https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=1350&q=80')" }}>
         <div className="relative z-10 p-8 max-w-4xl mx-auto">
-          <motion.h1 className="text-5xl md:text-7xl font-extrabold leading-tight mb-6 text-white drop-shadow-xl" variants={itemVariants}>Transforme sua Vida Financeira em Casal</motion.h1>
-          <motion.p className="text-xl md:text-2xl text-gray-300 mb-10 max-w-2xl mx-auto" variants={itemVariants}>Com o NósDois, vocês organizam despesas, alcançam metas e constroem um futuro próspero juntos. Simples, inteligente e sincronizado.</motion.p>
+          <motion.h1 className="text-6xl md:text-8xl font-extrabold leading-tight mb-8 text-white drop-shadow-xl" variants={itemVariants}>Transforme sua Vida Financeira em Casal</motion.h1>
+          <motion.p className="text-xl md:text-3xl text-gray-300 mb-12 max-w-3xl mx-auto" variants={itemVariants}>Com o NósDois, vocês organizam despesas, alcançam metas e constroem um futuro próspero juntos. Simples, inteligente e sincronizado.</motion.p>
           <motion.div variants={itemVariants}>
             <Link to="/register" className="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-4 px-10 rounded-full text-lg transition-transform transform hover:scale-105 shadow-2xl">Começar Gratuitamente</Link>
           </motion.div>
@@ -74,8 +74,8 @@ const LandingPage: React.FC = () => {
 
       <section id="features" className="py-24 bg-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <motion.h2 className="text-4xl font-bold mb-4 text-indigo-400" variants={itemVariants}>Tudo que vocês precisam em um só lugar</motion.h2>
-          <motion.p className="text-lg text-gray-400 mb-16 max-w-3xl mx-auto" variants={itemVariants}>Ferramentas poderosas para um controle financeiro descomplicado e eficiente, pensado para a vida a dois.</motion.p>
+          <motion.h2 className="text-5xl font-bold mb-6 text-indigo-400" variants={itemVariants}>Tudo que vocês precisam em um só lugar</motion.h2>
+          <motion.p className="text-xl text-gray-400 mb-20 max-w-4xl mx-auto" variants={itemVariants}>Ferramentas poderosas para um controle financeiro descomplicado e eficiente, pensado para a vida a dois.</motion.p>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
             <FeatureCard icon={<FiCreditCard />} title="Gestão de Despesas">Adicionem e categorizem despesas e receitas em segundos. Vejam para onde o dinheiro está indo em tempo real.</FeatureCard>
             <FeatureCard icon={<FiBarChart2 />} title="Relatórios Inteligentes">Gráficos e relatórios claros que ajudam a entender seus hábitos financeiros e a tomar decisões melhores.</FeatureCard>
@@ -99,8 +99,8 @@ const LandingPage: React.FC = () => {
 
       <section id="cta" className="py-24 bg-gray-900">
         <div className="max-w-4xl mx-auto px-8 text-center">
-          <motion.h2 className="text-4xl font-bold mb-6 text-white" variants={itemVariants}>Prontos para dar o próximo passo?</motion.h2>
-          <motion.p className="text-xl text-gray-300 mb-10" variants={itemVariants}>Junte-se a milhares de casais que estão construindo um futuro financeiro mais sólido e tranquilo.</motion.p>
+          <motion.h2 className="text-5xl font-bold mb-8 text-white" variants={itemVariants}>Prontos para dar o próximo passo?</motion.h2>
+          <motion.p className="text-xl text-gray-300 mb-12" variants={itemVariants}>Junte-se a milhares de casais que estão construindo um futuro financeiro mais sólido e tranquilo.</motion.p>
           <motion.div variants={itemVariants}>
             <Link to="/register" className="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-4 px-10 rounded-full text-lg transition-transform transform hover:scale-105 shadow-2xl">Crie sua conta gratuita agora</Link>
           </motion.div>
