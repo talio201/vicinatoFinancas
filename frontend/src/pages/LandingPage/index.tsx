@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FiBarChart2, FiCreditCard, FiShield, FiTrendingUp, FiCheckCircle, FiLock } from 'react-icons/fi';
+import { FiBarChart2, FiCreditCard, FiShield, FiTrendingUp, FiCheckCircle, FiLock, FiDollarSign } from 'react-icons/fi';
 import { useAuth } from '../../contexts/AuthContext/useAuth';
 import { useEffect } from 'react';
 
@@ -46,7 +46,10 @@ const LandingPage: React.FC = () => {
       <nav className="fixed top-0 left-0 right-0 bg-gray-900/80 backdrop-blur-sm z-50 border-b border-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-20">
-            <Link to="/" className="text-3xl font-bold text-white">Nós<span className="text-teal-400">Dois</span></Link>
+            <Link to="/" className="flex items-center text-3xl font-bold text-white">
+              <FiDollarSign className="text-teal-400 mr-2" />
+              Nós<span className="text-teal-400">Dois</span>
+            </Link>
             <div className="hidden md:block">
               <div className="ml-10 flex items-baseline space-x-4">
                 <a href="#features" className="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">Recursos</a>
