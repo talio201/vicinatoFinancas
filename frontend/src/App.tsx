@@ -10,6 +10,7 @@ import LoginPage from './pages/Login';
 import RegisterPage from './pages/Register';
 import BudgetPage from './pages/BudgetPage';
 import ReportsPage from './pages/ReportsPage';
+import UpdatePasswordPage from './pages/UpdatePasswordPage';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -19,6 +20,7 @@ function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/update-password" element={<UpdatePasswordPage />} />
         <Route
           path="/dashboard"
           element={

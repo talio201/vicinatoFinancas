@@ -88,6 +88,29 @@ const LoginPage: React.FC = () => {
             {formik.touched.password && formik.errors.password && (
               <p className="text-red-500 text-sm mt-1">{formik.errors.password}</p>
             )}
+            <div className="text-right mt-2">
+              <button
+                type="button"
+                onClick={async () => {
+                  const email = formik.values.email;
+                  if (!email) {
+                    toast.error('Por favor, insira seu email para redefinir a senha.');
+                    return;
+                  }
+                  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                    redirectTo: `${window.location.origin}/update-password`,
+                  });
+                  if (error) {
+                    toast.error(error.message);
+                  } else {
+                    toast.success('Verifique seu email para o link de redefinição de senha!');
+                  }
+                }}
+                className="text-sm text-purple-600 dark:text-purple-400 hover:underline"
+              >
+                Esqueceu a senha?
+              </button>
+            </div>
           </div>
           <button
             type="submit"
