@@ -38,6 +38,7 @@ jobs:
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_BACKEND_URL: https://vicinato-financas.vercel.app
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
