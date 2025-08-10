@@ -36,7 +36,6 @@ interface Goal {
   category_id: string;
   amount: number;
   month: string;
-  categories: { name: string };
 }
 
 interface CoupleData {
@@ -48,6 +47,7 @@ const Dashboard = () => {
   const { user, session } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [goals, setGoals] = useState<Goal[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [coupleData, setCoupleData] = useState<CoupleData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -69,11 +69,19 @@ const Dashboard = () => {
         // Fetch goals
         const { data: goalsData, error: goalsError } = await supabase
           .from('goals')
-          .select('*, categories(name)')
+          .select('*')
           .eq('user_id', user.id);
 
         if (goalsError) throw goalsError;
         setGoals(goalsData || []);
+
+        // Fetch categories
+        const { data: categoriesData, error: categoriesError } = await supabase
+          .from('categories')
+          .select('id, name');
+
+        if (categoriesError) throw categoriesError;
+        setCategories(categoriesData || []);
 
       } catch (err: any) {
         setError(err.message);
@@ -159,10 +167,10 @@ const Dashboard = () => {
   };
 
   const goalsProgress = goals.map(goal => {
-    const categoryName = goal.categories?.name || 'Uncategorized';
+    const categoryName = categories.find(cat => cat.id === goal.category_id)?.name || 'Uncategorized';
     const spent = expenseByCategory[categoryName] || 0;
     const progress = (spent / goal.amount) * 100;
-    return { ...goal, spent, progress };
+    return { ...goal, spent, progress, categoryName };
   });
 
   return (
@@ -193,7 +201,7 @@ const Dashboard = () => {
           {goalsProgress.map(goal => (
             <div key={goal.id} className="mb-2">
               <div className="flex justify-between">
-                <span>{goal.categories?.name}</span>
+                <span>{goal.categoryName}</span>
                 <span>{goal.spent.toFixed(2)} / {goal.amount.toFixed(2)}</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2.5">
