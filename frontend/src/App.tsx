@@ -12,8 +12,64 @@ import BudgetPage from './pages/BudgetPage';
 import ReportsPage from './pages/ReportsPage';
 import UpdatePasswordPage from './pages/UpdatePasswordPage';
 import ProtectedRoute from './components/ProtectedRoute';
+import toast from 'react-hot-toast';
+
+import ProtectedRoute from './components/ProtectedRoute';
+import toast from 'react-hot-toast';
+import { useEffect } from 'react';
+import { supabase } from './services/supabase';
 
 function App() {
+  useEffect(() => {
+    const channel = supabase
+      .channel('public:transactions')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'transactions' },
+        (payload) => {
+          toast.success(`Nova transação adicionada: ${payload.new.description || 'Sem descrição'} (R$ ${payload.new.amount})`);
+        }
+      )
+      .subscribe();
+
+    const budgetChannel = supabase
+      .channel('public:budgets')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'budgets' },
+        (payload) => {
+          toast.info(`Novo orçamento criado para ${payload.new.category_id} (R$ ${payload.new.budget_amount})`);
+        }
+      )
+      .subscribe();
+
+    const coupleChannel = supabase
+      .channel('public:couple_relationships')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'couple_relationships' },
+        (payload) => {
+          toast.info(`Novo pedido de conexão de casal recebido!`);
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'couple_relationships' },
+        (payload) => {
+          if (payload.new.status === 'accepted') {
+            toast.success(`Pedido de conexão de casal aceito!`);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+      supabase.removeChannel(budgetChannel);
+      supabase.removeChannel(coupleChannel);
+    };
+  }, []);
+
   return (
     <Router basename="/vicinatoFinancas/" future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <Routes>
