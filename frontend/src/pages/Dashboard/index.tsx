@@ -23,6 +23,8 @@ ChartJS.register(
   ArcElement
 );
 
+import type { Category } from '../../types';
+
 interface Transaction {
   id: string;
   type: 'income' | 'expense';
