@@ -87,7 +87,17 @@ const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      <section id="cta" className="py-24 bg-gray-800">
+      <section id="testimonial" className="py-24 bg-gray-800">
+        <div className="max-w-4xl mx-auto px-8 text-center">
+          <motion.h2 className="text-4xl font-bold mb-6 text-white" variants={itemVariants}>O que nossos usuários dizem</motion.h2>
+          <motion.div variants={itemVariants} className="bg-gray-900 p-8 rounded-xl shadow-lg">
+            <p className="text-xl text-gray-300 mb-6">"O NósDois transformou a maneira como lidamos com o dinheiro. Agora, estamos mais alinhados e confiantes em nosso futuro financeiro."</p>
+            <p className="text-indigo-400 font-bold">- Ana e João</p>
+          </motion.div>
+        </div>
+      </section>
+
+      <section id="cta" className="py-24 bg-gray-900">
         <div className="max-w-4xl mx-auto px-8 text-center">
           <motion.h2 className="text-4xl font-bold mb-6 text-white" variants={itemVariants}>Prontos para dar o próximo passo?</motion.h2>
           <motion.p className="text-xl text-gray-300 mb-10" variants={itemVariants}>Junte-se a milhares de casais que estão construindo um futuro financeiro mais sólido e tranquilo.</motion.p>
