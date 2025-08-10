@@ -331,7 +331,7 @@ app.delete('/api/goals/:id', authenticate, async (req, res) => {
 
 // Rotas de Metas Pessoais (Personal Goals)
 app.get('/api/personal-goals', authenticate, async (req, res) => {
-    const { data, error } = await req.supabase.from('personal_goals').select('*'); // RLS cuida do filtro
+    const { data, error } = await req.supabase.from('personal_goals').select('id, user_id, name, target_amount, current_amount, created_at, updated_at'); // RLS cuida do filtro
 
     if (error) {
         console.error('Erro ao buscar metas pessoais:', error.message);
