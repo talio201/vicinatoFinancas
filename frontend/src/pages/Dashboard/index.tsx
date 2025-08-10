@@ -12,6 +12,7 @@ import {
   Legend,
   ArcElement,
 } from 'chart.js';
+import { exportToCsv } from '../../utils/exportToCsv';
 
 ChartJS.register(
   CategoryScale,
@@ -175,9 +176,26 @@ const Dashboard = () => {
     return { ...goal, spent, progress, categoryName };
   });
 
+  const handleExport = () => {
+    const dataToExport = transactions.map(tx => ({
+      id: tx.id,
+      type: tx.type,
+      amount: tx.amount,
+      category: tx.categories?.name || 'Uncategorized',
+      date: tx.date,
+    }));
+    exportToCsv(dataToExport, 'transactions.csv');
+  };
+
   return (
     <div className="p-4">
       <h1 className="text-2xl font-bold mb-4">Dashboard</h1>
+      <button
+        onClick={handleExport}
+        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-4"
+      >
+        Export Transactions to CSV
+      </button>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
         <div className="bg-green-100 p-4 rounded-lg">
           <h2 className="text-lg font-semibold">Total Income</h2>
