@@ -95,7 +95,7 @@ const Dashboard = () => {
     const fetchCoupleData = async () => {
       if (session) {
         try {
-          const response = await fetch('/api/couple-dashboard', {
+          const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/couple-dashboard`, {
             headers: {
               'Authorization': `Bearer ${session.access_token}`,
             },
