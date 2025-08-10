@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../contexts/AuthContext/useAuth';
 import Layout from '../../components/Layout';
 import toast from 'react-hot-toast';
-import { Bar } from 'react-chartjs-2';
+import { Bar, Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -11,6 +11,8 @@ import {
   Title,
   Tooltip,
   Legend,
+  PointElement,
+  LineElement,
 } from 'chart.js';
 
 ChartJS.register(
@@ -19,12 +21,15 @@ ChartJS.register(
   BarElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
+  PointElement,
+  LineElement
 );
 
 const ReportsPage: React.FC = () => {
   const { supabase } = useAuth();
   const [expensesByCategory, setExpensesByCategory] = useState<{ [key: string]: number }>({});
+  const [incomeExpenseOverTime, setIncomeExpenseOverTime] = useState<Array<{ month: string; income: number; expense: number }>>([]);
   const [loading, setLoading] = useState(true);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -65,9 +70,46 @@ const ReportsPage: React.FC = () => {
     }
   }, [supabase, startDate, endDate]);
 
+  const fetchIncomeExpenseOverTime = useCallback(async () => {
+    if (!supabase) return;
+    setLoading(true);
+    let url = '/api/reports/income-expense-over-time';
+    const params = new URLSearchParams();
+
+    if (startDate) params.append('startDate', startDate);
+    if (endDate) params.append('endDate', endDate);
+
+    if (params.toString()) {
+      url = `${url}?${params.toString()}`;
+    }
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("User not authenticated");
+
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      setIncomeExpenseOverTime(data);
+    } catch (error: any) {
+      console.error('Error fetching income/expense over time:', error.message);
+      toast.error('Erro ao buscar dados de receita/despesa por tempo.');
+    } finally {
+      setLoading(false);
+    }
+  }, [supabase, startDate, endDate]);
+
   useEffect(() => {
     fetchExpensesByCategory();
-  }, [fetchExpensesByCategory]);
+    fetchIncomeExpenseOverTime();
+  }, [fetchExpensesByCategory, fetchIncomeExpenseOverTime]);
 
   const chartData = {
     labels: Object.keys(expensesByCategory),
@@ -89,6 +131,44 @@ const ReportsPage: React.FC = () => {
       title: {
         display: true,
         text: 'Despesas por Categoria',
+      },
+    },
+  };
+
+  const incomeExpenseChartData = {
+    labels: incomeExpenseOverTime.map(data => data.month),
+    datasets: [
+      {
+        label: 'Receita',
+        data: incomeExpenseOverTime.map(data => data.income),
+        borderColor: 'rgb(75, 192, 192)',
+        backgroundColor: 'rgba(75, 192, 192, 0.5)',
+        tension: 0.1,
+      },
+      {
+        label: 'Despesa',
+        data: incomeExpenseOverTime.map(data => data.expense),
+        borderColor: 'rgb(255, 99, 132)',
+        backgroundColor: 'rgba(255, 99, 132, 0.5)',
+        tension: 0.1,
+      },
+    ],
+  };
+
+  const incomeExpenseChartOptions = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: 'top' as const,
+      },
+      title: {
+        display: true,
+        text: 'Receita vs. Despesa ao Longo do Tempo',
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
       },
     },
   };
@@ -128,6 +208,17 @@ const ReportsPage: React.FC = () => {
             <Bar data={chartData} options={chartOptions} />
           ) : (
             <p className="text-white">Nenhum dado de despesa encontrado para o período selecionado.</p>
+          )}
+        </div>
+
+        <div className="bg-gray-800 p-6 rounded-lg shadow-lg mb-8">
+          <h2 className="text-2xl font-semibold text-white mb-4">Receita vs. Despesa ao Longo do Tempo</h2>
+          {loading ? (
+            <p className="text-white">Carregando dados do relatório...</p>
+          ) : incomeExpenseOverTime.length > 0 ? (
+            <Line data={incomeExpenseChartData} options={incomeExpenseChartOptions} />
+          ) : (
+            <p className="text-white">Nenhum dado de receita ou despesa encontrado para o período selecionado.</p>
           )}
         </div>
       </div>

@@ -679,6 +679,47 @@ app.get('/api/reports/expenses-by-category', authenticate, validate(reportQueryS
   res.status(200).json(expensesByCategory);
 });
 
+app.get('/api/reports/income-expense-over-time', authenticate, validate(reportQuerySchema), async (req, res) => {
+  const { id: userId } = req.user;
+  const { startDate, endDate } = req.query;
+
+  let query = req.supabase
+    .from('transactions')
+    .select('type, amount, date')
+    .eq('user_id', userId);
+
+  if (startDate) query = query.gte('date', startDate);
+  if (endDate) query = query.lte('date', endDate);
+
+  const { data, error } = await query.order('date', { ascending: true });
+
+  if (error) {
+    console.error('Erro ao buscar dados de receita/despesa por tempo:', error.message);
+    return res.status(500).json({ error: 'Não foi possível buscar dados de receita/despesa por tempo.' });
+  }
+
+  const monthlyData = data.reduce((acc, transaction) => {
+    const month = new Date(transaction.date).toISOString().substring(0, 7); // YYYY-MM
+    if (!acc[month]) {
+      acc[month] = { income: 0, expense: 0 };
+    }
+    if (transaction.type === 'income') {
+      acc[month].income += transaction.amount;
+    } else {
+      acc[month].expense += transaction.amount;
+    }
+    return acc;
+  }, {});
+
+  const formattedData = Object.keys(monthlyData).sort().map(month => ({
+    month,
+    income: monthlyData[month].income,
+    expense: monthlyData[month].expense,
+  }));
+
+  res.status(200).json(formattedData);
+});
+
 // Rota para o Dashboard de Casal
 app.get('/api/couple-dashboard', authenticate, async (req, res) => {
   const { id: userId } = req.user;
