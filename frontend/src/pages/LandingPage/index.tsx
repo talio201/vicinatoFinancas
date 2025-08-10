@@ -7,10 +7,10 @@ import { useEffect } from 'react';
 
 const FeatureCard: React.FC<{ icon: React.ReactNode; title: string; children: React.ReactNode }> = ({ icon, title, children }) => (
   <motion.div
-    className="bg-gray-800 p-8 rounded-xl shadow-lg hover:shadow-teal-500/20 transform hover:-translate-y-2 transition-all duration-300"
+    className="bg-gray-800 p-8 rounded-xl shadow-lg hover:shadow-indigo-500/20 transform hover:-translate-y-2 transition-all duration-300"
     variants={{ hidden: { y: 20, opacity: 0 }, visible: { y: 0, opacity: 1, transition: { duration: 0.6 } } }}
   >
-    <div className="text-teal-400 mb-4 text-4xl">{icon}</div>
+    <div className="text-indigo-400 mb-4 text-4xl">{icon}</div>
     <h3 className="text-2xl font-bold mb-3 text-white">{title}</h3>
     <p className="text-gray-400">{children}</p>
   </motion.div>
@@ -47,15 +47,15 @@ const LandingPage: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-20">
             <Link to="/" className="flex items-center text-3xl font-bold text-white">
-              <FiDollarSign className="text-teal-400 mr-2" />
-              Nós<span className="text-teal-400">Dois</span>
+              <FiDollarSign className="text-indigo-400 mr-2" />
+              Nós<span className="text-indigo-400">Dois</span>
             </Link>
             <div className="hidden md:block">
               <div className="ml-10 flex items-baseline space-x-4">
                 <a href="#features" className="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">Recursos</a>
                 <a href="#cta" className="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">Comece Agora</a>
                 <Link to="/login" className="text-gray-300 bg-gray-800 hover:bg-gray-700 hover:text-white px-4 py-2 rounded-md text-sm font-bold transition-colors">Login</Link>
-                <Link to="/register" className="bg-teal-500 hover:bg-teal-600 text-white font-bold py-2 px-4 rounded-md text-sm transition-transform transform hover:scale-105 shadow-lg">Criar Conta</Link>
+                <Link to="/register" className="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-md text-sm transition-transform transform hover:scale-105 shadow-lg">Criar Conta</Link>
               </div>
             </div>
           </div>
@@ -67,14 +67,14 @@ const LandingPage: React.FC = () => {
           <motion.h1 className="text-5xl md:text-7xl font-extrabold leading-tight mb-6 text-white drop-shadow-xl" variants={itemVariants}>Transforme sua Vida Financeira em Casal</motion.h1>
           <motion.p className="text-xl md:text-2xl text-gray-300 mb-10 max-w-2xl mx-auto" variants={itemVariants}>Com o NósDois, vocês organizam despesas, alcançam metas e constroem um futuro próspero juntos. Simples, inteligente e sincronizado.</motion.p>
           <motion.div variants={itemVariants}>
-            <Link to="/register" className="bg-teal-500 hover:bg-teal-600 text-white font-bold py-4 px-10 rounded-full text-lg transition-transform transform hover:scale-105 shadow-2xl">Começar Gratuitamente</Link>
+            <Link to="/register" className="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-4 px-10 rounded-full text-lg transition-transform transform hover:scale-105 shadow-2xl">Começar Gratuitamente</Link>
           </motion.div>
         </div>
       </section>
 
       <section id="features" className="py-24 bg-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <motion.h2 className="text-4xl font-bold mb-4 text-teal-400" variants={itemVariants}>Tudo que vocês precisam em um só lugar</motion.h2>
+          <motion.h2 className="text-4xl font-bold mb-4 text-indigo-400" variants={itemVariants}>Tudo que vocês precisam em um só lugar</motion.h2>
           <motion.p className="text-lg text-gray-400 mb-16 max-w-3xl mx-auto" variants={itemVariants}>Ferramentas poderosas para um controle financeiro descomplicado e eficiente, pensado para a vida a dois.</motion.p>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
             <FeatureCard icon={<FiCreditCard />} title="Gestão de Despesas">Adicionem e categorizem despesas e receitas em segundos. Vejam para onde o dinheiro está indo em tempo real.</FeatureCard>
@@ -92,7 +92,7 @@ const LandingPage: React.FC = () => {
           <motion.h2 className="text-4xl font-bold mb-6 text-white" variants={itemVariants}>Prontos para dar o próximo passo?</motion.h2>
           <motion.p className="text-xl text-gray-300 mb-10" variants={itemVariants}>Junte-se a milhares de casais que estão construindo um futuro financeiro mais sólido e tranquilo.</motion.p>
           <motion.div variants={itemVariants}>
-            <Link to="/register" className="bg-teal-500 hover:bg-teal-600 text-white font-bold py-4 px-10 rounded-full text-lg transition-transform transform hover:scale-105 shadow-2xl">Crie sua conta gratuita agora</Link>
+            <Link to="/register" className="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-4 px-10 rounded-full text-lg transition-transform transform hover:scale-105 shadow-2xl">Crie sua conta gratuita agora</Link>
           </motion.div>
         </div>
       </section>
@@ -100,8 +100,8 @@ const LandingPage: React.FC = () => {
       <footer className="bg-gray-900 border-t border-gray-800 py-8 text-center text-gray-500">
         <p>&copy; {new Date().getFullYear()} NósDois. Todos os direitos reservados.</p>
         <div className="mt-4 space-x-6">
-          <Link to="/privacy" className="hover:text-teal-400 transition-colors">Política de Privacidade</Link>
-          <Link to="/terms" className="hover:text-teal-400 transition-colors">Termos de Uso</Link>
+          <Link to="/privacy" className="hover:text-indigo-400 transition-colors">Política de Privacidade</Link>
+          <Link to="/terms" className="hover:text-indigo-400 transition-colors">Termos de Uso</Link>
         </div>
       </footer>
     </motion.div>
