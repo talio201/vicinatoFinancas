@@ -286,7 +286,7 @@ app.get('/api/goals', authenticate, async (req, res) => {
 
     const { data, error } = await req.supabase
         .from('goals')
-        .select('*')
+        .select('id, user_id, category_id, amount, month, created_at')
         .eq('user_id', userId)
         .eq('month', month);
 
