@@ -720,6 +720,81 @@ app.get('/api/reports/income-expense-over-time', authenticate, validate(reportQu
   res.status(200).json(formattedData);
 });
 
+app.get('/api/reports/budget-vs-actual', authenticate, validate(reportQuerySchema), async (req, res) => {
+  const { id: userId } = req.user;
+  const { startDate, endDate } = req.query;
+
+  try {
+    // Fetch budgets for the user
+    let budgetQuery = req.supabase
+      .from('budgets')
+      .select('category_id, budget_amount, start_date, end_date')
+      .eq('user_id', userId);
+
+    if (startDate) budgetQuery = budgetQuery.gte('start_date', startDate);
+    if (endDate) budgetQuery = budgetQuery.lte('end_date', endDate);
+
+    const { data: budgets, error: budgetError } = await budgetQuery;
+
+    if (budgetError) throw budgetError;
+
+    // Fetch actual expenses for the user within the budget periods
+    let transactionQuery = req.supabase
+      .from('transactions')
+      .select('category_id, amount')
+      .eq('user_id', userId)
+      .eq('type', 'expense');
+
+    if (startDate) transactionQuery = transactionQuery.gte('date', startDate);
+    if (endDate) transactionQuery = transactionQuery.lte('date', endDate);
+
+    const { data: transactions, error: transactionError } = await transactionQuery;
+
+    if (transactionError) throw transactionError;
+
+    // Aggregate actual spending by category
+    const actualSpendingByCategory = transactions.reduce((acc, tx) => {
+      acc[tx.category_id] = (acc[tx.category_id] || 0) + tx.amount;
+      return acc;
+    }, {});
+
+    // Combine budget and actual spending data
+    const reportData = budgets.map(budget => {
+      const actual = actualSpendingByCategory[budget.category_id] || 0;
+      return {
+        category_id: budget.category_id,
+        budgeted: budget.budget_amount,
+        actual: actual,
+        remaining: budget.budget_amount - actual,
+      };
+    });
+
+    // Fetch category names
+    const categoryIds = [...new Set(reportData.map(item => item.category_id))];
+    const { data: categories, error: categoryError } = await req.supabase
+      .from('categories')
+      .select('id, name')
+      .in('id', categoryIds);
+
+    if (categoryError) throw categoryError;
+
+    const categoryMap = new Map(categories.map(cat => [cat.id, cat.name]));
+
+    const formattedReportData = reportData.map(item => ({
+      categoryName: categoryMap.get(item.category_id) || 'Desconhecida',
+      budgeted: item.budgeted,
+      actual: item.actual,
+      remaining: item.remaining,
+    }));
+
+    res.status(200).json(formattedReportData);
+
+  } catch (err) {
+    console.error('Erro ao buscar relatório de orçamento vs. real:', err.message);
+    res.status(500).json({ error: 'Não foi possível buscar o relatório de orçamento vs. real.' });
+  }
+});
+
 // Rota para o Dashboard de Casal
 app.get('/api/couple-dashboard', authenticate, async (req, res) => {
   const { id: userId } = req.user;

@@ -30,6 +30,7 @@ const ReportsPage: React.FC = () => {
   const { supabase } = useAuth();
   const [expensesByCategory, setExpensesByCategory] = useState<{ [key: string]: number }>({});
   const [incomeExpenseOverTime, setIncomeExpenseOverTime] = useState<Array<{ month: string; income: number; expense: number }>>([]);
+  const [budgetVsActual, setBudgetVsActual] = useState<Array<{ categoryName: string; budgeted: number; actual: number; remaining: number }>>([]);
   const [loading, setLoading] = useState(true);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -106,10 +107,47 @@ const ReportsPage: React.FC = () => {
     }
   }, [supabase, startDate, endDate]);
 
+  const fetchBudgetVsActual = useCallback(async () => {
+    if (!supabase) return;
+    setLoading(true);
+    let url = '/api/reports/budget-vs-actual';
+    const params = new URLSearchParams();
+
+    if (startDate) params.append('startDate', startDate);
+    if (endDate) params.append('endDate', endDate);
+
+    if (params.toString()) {
+      url = `${url}?${params.toString()}`;
+    }
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("User not authenticated");
+
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      setBudgetVsActual(data);
+    } catch (error: any) {
+      console.error('Error fetching budget vs actual:', error.message);
+      toast.error('Erro ao buscar relatório de orçamento vs. real.');
+    } finally {
+      setLoading(false);
+    }
+  }, [supabase, startDate, endDate]);
+
   useEffect(() => {
     fetchExpensesByCategory();
     fetchIncomeExpenseOverTime();
-  }, [fetchExpensesByCategory, fetchIncomeExpenseOverTime]);
+    fetchBudgetVsActual();
+  }, [fetchExpensesByCategory, fetchIncomeExpenseOverTime, fetchBudgetVsActual]);
 
   const chartData = {
     labels: Object.keys(expensesByCategory),
@@ -219,6 +257,17 @@ const ReportsPage: React.FC = () => {
             <Line data={incomeExpenseChartData} options={incomeExpenseChartOptions} />
           ) : (
             <p className="text-white">Nenhum dado de receita ou despesa encontrado para o período selecionado.</p>
+          )}
+        </div>
+
+        <div className="bg-gray-800 p-6 rounded-lg shadow-lg mb-8">
+          <h2 className="text-2xl font-semibold text-white mb-4">Orçamento vs. Real</h2>
+          {loading ? (
+            <p className="text-white">Carregando dados do relatório...</p>
+          ) : budgetVsActual.length > 0 ? (
+            <Bar data={budgetVsActualChartData} options={budgetVsActualChartOptions} />
+          ) : (
+            <p className="text-white">Nenhum dado de orçamento vs. real encontrado para o período selecionado.</p>
           )}
         </div>
       </div>
