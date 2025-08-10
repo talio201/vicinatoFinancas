@@ -795,6 +795,36 @@ app.get('/api/reports/budget-vs-actual', authenticate, validate(reportQuerySchem
   }
 });
 
+// Rota para Detecção de Anomalias (Exemplo com API Hipotética de Terceiros)
+app.post('/api/anomaly-detection', authenticate, async (req, res) => {
+  const { transactions } = req.body; // Espera-se um array de transações
+
+  if (!transactions || !Array.isArray(transactions) || transactions.length === 0) {
+    return res.status(400).json({ error: 'Dados de transação inválidos ou ausentes.' });
+  }
+
+  try {
+    // Simulação de chamada a uma API de terceiros para detecção de anomalias
+    // Em um cenário real, você faria uma requisição HTTP para a API externa aqui.
+    // Ex: const response = await axios.post('https://api.thirdparty.com/anomaly-detect', { data: transactions, apiKey: process.env.THIRD_PARTY_API_KEY });
+    // const anomalyResults = response.data;
+
+    // Para fins de demonstração, vamos simular alguns resultados de anomalia
+    const anomalyResults = transactions.map(tx => ({
+      ...tx,
+      is_anomaly: Math.random() < 0.1, // 10% de chance de ser uma anomalia
+      anomaly_score: Math.random().toFixed(2),
+      reason: Math.random() < 0.05 ? 'Gasto incomum' : null, // 5% de chance de ter uma razão
+    }));
+
+    res.status(200).json(anomalyResults);
+
+  } catch (err) {
+    console.error('Erro ao processar detecção de anomalias:', err.message);
+    res.status(500).json({ error: 'Não foi possível realizar a detecção de anomalias.' });
+  }
+});
+
 // Rota para o Dashboard de Casal
 app.get('/api/couple-dashboard', authenticate, async (req, res) => {
   const { id: userId } = req.user;

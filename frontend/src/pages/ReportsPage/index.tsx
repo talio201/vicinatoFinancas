@@ -31,6 +31,7 @@ const ReportsPage: React.FC = () => {
   const [expensesByCategory, setExpensesByCategory] = useState<{ [key: string]: number }>({});
   const [incomeExpenseOverTime, setIncomeExpenseOverTime] = useState<Array<{ month: string; income: number; expense: number }>>([]);
   const [budgetVsActual, setBudgetVsActual] = useState<Array<{ categoryName: string; budgeted: number; actual: number; remaining: number }>>([]);
+  const [anomalyDetectionResults, setAnomalyDetectionResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -142,6 +143,43 @@ const ReportsPage: React.FC = () => {
       setLoading(false);
     }
   }, [supabase, startDate, endDate]);
+
+  const runAnomalyDetection = useCallback(async () => {
+    if (!supabase) return;
+    setLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("User not authenticated");
+
+      // Fetch all transactions for anomaly detection
+      const { data: transactions, error: transactionsError } = await supabase
+        .from('transactions')
+        .select('id, type, amount, date, description, category_id');
+
+      if (transactionsError) throw transactionsError;
+
+      const response = await fetch('/api/anomaly-detection', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ transactions }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      setAnomalyDetectionResults(data.filter((tx: any) => tx.is_anomaly));
+      toast.success('Detecção de anomalias concluída!');
+    } catch (error: any) {
+      console.error('Error running anomaly detection:', error.message);
+      toast.error('Erro ao executar detecção de anomalias.');
+    } finally {
+      setLoading(false);
+    }
+  }, [supabase]);
 
   useEffect(() => {
     fetchExpensesByCategory();
@@ -268,6 +306,42 @@ const ReportsPage: React.FC = () => {
             <Bar data={budgetVsActualChartData} options={budgetVsActualChartOptions} />
           ) : (
             <p className="text-white">Nenhum dado de orçamento vs. real encontrado para o período selecionado.</p>
+          )}
+        </div>
+
+        <div className="bg-gray-800 p-6 rounded-lg shadow-lg mb-8">
+          <h2 className="text-2xl font-semibold text-white mb-4">Orçamento vs. Real</h2>
+          {loading ? (
+            <p className="text-white">Carregando dados do relatório...</p>
+          ) : budgetVsActual.length > 0 ? (
+            <Bar data={budgetVsActualChartData} options={budgetVsActualChartOptions} />
+          ) : (
+            <p className="text-white">Nenhum dado de orçamento vs. real encontrado para o período selecionado.</p>
+          )}
+        </div>
+
+        <div className="bg-gray-800 p-6 rounded-lg shadow-lg mb-8">
+          <h2 className="text-2xl font-semibold text-white mb-4">Detecção de Anomalias</h2>
+          <button
+            onClick={runAnomalyDetection}
+            disabled={loading}
+            className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded mb-4 disabled:opacity-50"
+          >
+            {loading ? 'Detectando...' : 'Executar Detecção de Anomalias'}
+          </button>
+          {anomalyDetectionResults.length > 0 ? (
+            <div className="space-y-2">
+              <p className="text-white">Anomalias detectadas:</p>
+              <ul className="list-disc list-inside text-white">
+                {anomalyDetectionResults.map((anomaly: any) => (
+                  <li key={anomaly.id}>
+                    {anomaly.description || 'Transação'} de R$ {anomaly.amount} em {new Date(anomaly.date).toLocaleDateString()} (Score: {anomaly.anomaly_score})
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : (
+            <p className="text-white">Nenhuma anomalia detectada para o período selecionado.</p>
           )}
         </div>
       </div>
