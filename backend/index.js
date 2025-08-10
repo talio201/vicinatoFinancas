@@ -209,8 +209,8 @@ app.get('/api/transactions', authenticate, async (req, res) => {
   const { data, error } = await query.order('date', { ascending: false });
 
   if (error) {
-    console.error('Erro ao buscar transações:', error.message);
-    return res.status(500).json({ error: 'Não foi possível buscar as transações.' });
+    console.error('Erro ao buscar transações:', error);
+    return res.status(500).json({ error: 'Não foi possível buscar as transações.', details: error });
   }
   res.status(200).json(data);
 });
