@@ -30,16 +30,7 @@ const allowedOrigins = [
 ];
 
 app.use(helmet());
-app.use(cors({
-  origin: (origin, callback) => {
-    // Permite requisições sem origin (ex: mobile apps, curl) e de localhost em desenvolvimento
-    if (!origin || allowedOrigins.includes(origin) || (process.env.NODE_ENV !== 'production' && origin.startsWith('http://localhost'))) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-}));
+app.use(cors());
 app.use(express.json());
 
 // --- Middleware de Validação ---
@@ -656,6 +647,97 @@ app.get('/api/reports/expenses-by-category', authenticate, validate(reportQueryS
   }, {});
 
   res.status(200).json(expensesByCategory);
+});
+
+// Rotas de Relatórios e Análises
+app.get('/api/reports/expenses-by-category', authenticate, validate(reportQuerySchema), async (req, res) => {
+  const { id: userId } = req.user;
+  const { startDate, endDate } = req.query;
+
+  let query = req.supabase
+    .from('transactions')
+    .select('category_id, amount, categories(name)')
+    .eq('user_id', userId)
+    .eq('type', 'expense');
+
+  if (startDate) query = query.gte('date', startDate);
+  if (endDate) query = query.lte('date', endDate);
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error('Erro ao buscar despesas por categoria:', error.message);
+    return res.status(500).json({ error: 'Não foi possível buscar despesas por categoria.' });
+  }
+
+  const expensesByCategory = data.reduce((acc, transaction) => {
+    const categoryName = transaction.categories?.name || 'Desconhecida';
+    acc[categoryName] = (acc[categoryName] || 0) + transaction.amount;
+    return acc;
+  }, {});
+
+  res.status(200).json(expensesByCategory);
+});
+
+// Rota para o Dashboard de Casal
+app.get('/api/couple-dashboard', authenticate, async (req, res) => {
+  const { id: userId } = req.user;
+
+  try {
+    // 1. Encontrar o relacionamento de casal
+    const { data: relationshipData, error: relationshipError } = await req.supabase
+      .from('couple_relationships')
+      .select('user1_id, user2_id')
+      .or(`user1_id.eq.${userId},user2_id.eq.${userId}`)
+      .eq('status', 'accepted')
+      .single();
+
+    if (relationshipError && relationshipError.code !== 'PGRST116') { // PGRST116 = no rows found
+      console.error('Erro ao buscar relacionamento de casal:', relationshipError.message);
+      return res.status(500).json({ error: 'Não foi possível buscar o relacionamento de casal.' });
+    }
+
+    let partnerId = null;
+    if (relationshipData) {
+      partnerId = relationshipData.user1_id === userId ? relationshipData.user2_id : relationshipData.user1_id;
+    }
+
+    const userIdsToFetch = [userId];
+    if (partnerId) {
+      userIdsToFetch.push(partnerId);
+    }
+
+    // 2. Buscar transações para os IDs de usuário
+    const { data: transactionsData, error: transactionsError } = await req.supabase
+      .from('transactions')
+      .select('*, categories(name)')
+      .in('user_id', userIdsToFetch);
+
+    if (transactionsError) {
+      console.error('Erro ao buscar transações para o casal:', transactionsError.message);
+      return res.status(500).json({ error: 'Não foi possível buscar as transações do casal.' });
+    }
+
+    // 3. Buscar metas para os IDs de usuário
+    const { data: goalsData, error: goalsError } = await req.supabase
+      .from('goals')
+      .select('*')
+      .in('user_id', userIdsToFetch);
+
+    if (goalsError) {
+      console.error('Erro ao buscar metas para o casal:', goalsError.message);
+      return res.status(500).json({ error: 'Não foi possível buscar as metas do casal.' });
+    }
+
+    res.status(200).json({
+      transactions: transactionsData || [],
+      goals: goalsData || [],
+    });
+
+  } catch (err) {
+    console.error('Erro inesperado no couple-dashboard:', err.message);
+    res.status(500).json({ error: 'Erro interno do servidor.' });
+  }
 });
 
 // --- Inicialização do Servidor ---
