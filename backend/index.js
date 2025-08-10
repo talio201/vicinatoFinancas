@@ -304,7 +304,7 @@ app.post('/api/goals', authenticate, validate(goalSchema), async (req, res) => {
     const { data, error } = await req.supabase
         .from('goals')
         .upsert({ user_id: userId, category, amount, month }, { onConflict: 'user_id,category,month' })
-        .select()
+        .select('id, user_id, category_id, amount, month, created_at')
         .single();
 
     if (error) {
