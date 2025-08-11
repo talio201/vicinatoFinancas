@@ -1,18 +1,35 @@
 import request from 'supertest';
 import app from './index.js';
 import { createClient } from '@supabase/supabase-js';
-import { MockProxy, mockDeep, mockReset } from 'jest-mock-extended';
 
 // Mock the entire @supabase/supabase-js module
 jest.mock('@supabase/supabase-js');
 
-const mockSupabase = createClient('test-url', 'test-key') as MockProxy<ReturnType<typeof createClient>>;
+// Explicitly type the mock client
+const mockSupabase = {
+  auth: {
+    getUser: jest.fn(),
+  },
+  from: jest.fn(() => ({
+    select: jest.fn(),
+    insert: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+    eq: jest.fn(),
+    order: jest.fn(),
+    single: jest.fn(),
+  })),
+} as unknown as ReturnType<typeof createClient>;
+
+// Mock the createClient function to return our mockSupabase object
+(createClient as jest.Mock).mockReturnValue(mockSupabase);
 
 describe('GET /api/transactions', () => {
   beforeEach(() => {
-    mockReset(mockSupabase); // Reset mocks before each test
-    // Ensure createClient returns a deep mock for each test
-    (createClient as jest.Mock).mockReturnValue(mockDeep());
+    // Reset all mocks before each test
+    jest.clearAllMocks();
+    // Re-mock createClient to return our mockSupabase
+    (createClient as jest.Mock).mockReturnValue(mockSupabase);
   });
 
   it('should return 401 if no authorization header is provided', async () => {
@@ -29,11 +46,9 @@ describe('GET /api/transactions', () => {
     });
 
     // Mock the from('transactions').select() method
-    (mockSupabase.from as jest.Mock).mockReturnValue({
-      select: jest.fn().mockResolvedValueOnce({
-        data: [{ id: 'tx1', amount: 100, type: 'income' }],
-        error: null,
-      }),
+    (mockSupabase.from('transactions').select as jest.Mock).mockResolvedValueOnce({
+      data: [{ id: 'tx1', amount: 100, type: 'income' }],
+      error: null,
     });
 
     const res = await request(app)

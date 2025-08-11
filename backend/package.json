@@ -5,7 +5,10 @@
   "main": "index.js",
   "scripts": {
     "test": "jest",
-    "dev": "nodemon index.js"
+    "dev": "nodemon index.js",
+    "lint": "eslint . --ext .js,.ts",
+    "lint:fix": "eslint . --ext .js,.ts --fix",
+    "format": "prettier --write \"./**/*.{js,ts,json}\""
   },
   "keywords": [],
   "author": "",
@@ -25,10 +28,16 @@
     "@babel/preset-typescript": "^7.27.1",
     "@types/jest": "^30.0.0",
     "@types/supertest": "^6.0.3",
+    "@typescript-eslint/eslint-plugin": "^8.39.0",
+    "@typescript-eslint/parser": "^8.39.0",
     "babel-jest": "^30.0.5",
+    "eslint": "^9.33.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.4",
     "jest": "^30.0.5",
     "jest-mock-extended": "^4.0.0",
     "nodemon": "^3.1.10",
+    "prettier": "^3.6.2",
     "supertest": "^7.1.4",
     "ts-jest": "^29.4.1"
   }

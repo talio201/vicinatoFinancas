@@ -1,4 +1,3 @@
-
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -12,7 +11,7 @@ const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceKey) {
-  console.error("Variáveis de ambiente Supabase não estão definidas.");
+  console.error('Variáveis de ambiente Supabase não estão definidas.');
   process.exit(1);
 }
 
@@ -24,7 +23,7 @@ const port = process.env.PORT || 3001;
 
 // --- Configuração de Segurança ---
 const allowedOrigins = [
-  'https://talio201.github.io'
+  'https://talio201.github.io',
   // Adicione aqui a URL do seu frontend em produção
   // Ex: 'https://meu-app-financeiro.com'
 ];
@@ -59,7 +58,10 @@ const authenticate = async (req, res, next) => {
     global: { headers: { Authorization: `Bearer ${token}` } },
   });
 
-  const { data: { user }, error } = await userSupabase.auth.getUser();
+  const {
+    data: { user },
+    error,
+  } = await userSupabase.auth.getUser();
 
   if (error || !user) {
     return res.status(401).json({ error: 'Token inválido ou expirado.' });
@@ -146,8 +148,14 @@ const budgetSchema = z.object({
 
 const reportQuerySchema = z.object({
   query: z.object({
-    startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-    endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+    startDate: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/)
+      .optional(),
+    endDate: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/)
+      .optional(),
     category: z.string().optional(),
   }),
 });
@@ -171,7 +179,7 @@ app.post('/api/transactions', authenticate, validate(transactionSchema), async (
   today.setHours(0, 0, 0, 0);
 
   const table = transactionDate > today ? 'scheduled_transactions' : 'transactions';
-  
+
   const { data, error } = await req.supabase
     .from(table)
     .insert({ user_id: userId, type, amount, category_id, description, date })
@@ -210,7 +218,9 @@ app.get('/api/transactions', authenticate, async (req, res) => {
 
   if (error) {
     console.error('Erro ao buscar transações:', error);
-    return res.status(500).json({ error: 'Não foi possível buscar as transações.', details: error });
+    return res
+      .status(500)
+      .json({ error: 'Não foi possível buscar as transações.', details: error });
   }
   res.status(200).json(data);
 });
@@ -218,10 +228,7 @@ app.get('/api/transactions', authenticate, async (req, res) => {
 app.delete('/api/transactions/:id', authenticate, async (req, res) => {
   const { id: transactionId } = req.params;
 
-  const { error } = await req.supabase
-    .from('transactions')
-    .delete()
-    .eq('id', transactionId); // RLS já garante que o usuário só pode deletar o que é seu
+  const { error } = await req.supabase.from('transactions').delete().eq('id', transactionId); // RLS já garante que o usuário só pode deletar o que é seu
 
   if (error) {
     console.error('Erro ao deletar transação:', error.message);
@@ -232,15 +239,17 @@ app.delete('/api/transactions/:id', authenticate, async (req, res) => {
 
 app.put('/api/transactions/:id', authenticate, validate(transactionSchema), async (req, res) => {
   const { id: transactionId } = req.params;
-  
+
   const { data, error } = await req.supabase
     .from('transactions')
     .update(req.body)
     .eq('id', transactionId) // RLS garante a segurança
-    .select(`
+    .select(
+      `
       *,
       categories(name)
-    `)
+    `,
+    )
     .single();
 
   if (error) {
@@ -269,117 +278,121 @@ app.get('/api/categories', authenticate, async (req, res) => {
 
 // Rotas de Metas (Goals)
 app.get('/api/goals', authenticate, async (req, res) => {
-    const { id: userId } = req.user;
-    const { month } = req.query;
+  const { id: userId } = req.user;
+  const { month } = req.query;
 
-    if (!month) {
-        return res.status(400).json({ error: 'O parâmetro "month" é obrigatório.' });
-    }
+  if (!month) {
+    return res.status(400).json({ error: 'O parâmetro "month" é obrigatório.' });
+  }
 
-    console.log('Supabase query for goals:', `from('goals').select('id, user_id, category_id, amount, month, created_at').eq('user_id', ${userId}).eq('month', ${month})`);
-    const { data, error } = await req.supabase
-        .from('goals')
-        .select('id, user_id, category_id, amount, month, created_at')
-        .eq('user_id', userId)
-        .eq('month', month);
+  console.log(
+    'Supabase query for goals:',
+    `from('goals').select('id, user_id, category_id, amount, month, created_at').eq('user_id', ${userId}).eq('month', ${month})`,
+  );
+  const { data, error } = await req.supabase
+    .from('goals')
+    .select('id, user_id, category_id, amount, month, created_at')
+    .eq('user_id', userId)
+    .eq('month', month);
 
-    if (error) {
-        console.error('Erro ao buscar metas:', error.message);
-        return res.status(500).json({ error: 'Não foi possível buscar as metas.' });
-    }
-    res.status(200).json(data);
+  if (error) {
+    console.error('Erro ao buscar metas:', error.message);
+    return res.status(500).json({ error: 'Não foi possível buscar as metas.' });
+  }
+  res.status(200).json(data);
 });
 
 app.post('/api/goals', authenticate, validate(goalSchema), async (req, res) => {
-    const { id: userId } = req.user;
-    const { category, amount, month } = req.body;
+  const { id: userId } = req.user;
+  const { category, amount, month } = req.body;
 
-    const { data, error } = await req.supabase
-        .from('goals')
-        .upsert({ user_id: userId, category, amount, month }, { onConflict: 'user_id,category,month' })
-        .select('id, user_id, category_id, amount, month, created_at')
-        .single();
+  const { data, error } = await req.supabase
+    .from('goals')
+    .upsert({ user_id: userId, category, amount, month }, { onConflict: 'user_id,category,month' })
+    .select('id, user_id, category_id, amount, month, created_at')
+    .single();
 
-    if (error) {
-        console.error('Erro ao salvar meta:', error.message);
-        return res.status(500).json({ error: 'Não foi possível salvar a meta.' });
-    }
-    res.status(201).json({ message: 'Meta salva com sucesso!', goal: data });
+  if (error) {
+    console.error('Erro ao salvar meta:', error.message);
+    return res.status(500).json({ error: 'Não foi possível salvar a meta.' });
+  }
+  res.status(201).json({ message: 'Meta salva com sucesso!', goal: data });
 });
 
 app.delete('/api/goals/:id', authenticate, async (req, res) => {
-    const { id: goalId } = req.params;
+  const { id: goalId } = req.params;
 
-    const { error } = await req.supabase
-        .from('goals')
-        .delete()
-        .eq('id', goalId); // RLS garante a segurança
+  const { error } = await req.supabase.from('goals').delete().eq('id', goalId); // RLS garante a segurança
 
-    if (error) {
-        console.error('Erro ao deletar meta:', error.message);
-        return res.status(500).json({ error: 'Não foi possível deletar a meta.' });
-    }
-    res.status(204).send();
+  if (error) {
+    console.error('Erro ao deletar meta:', error.message);
+    return res.status(500).json({ error: 'Não foi possível deletar a meta.' });
+  }
+  res.status(204).send();
 });
 
 // Rotas de Metas Pessoais (Personal Goals)
 app.get('/api/personal-goals', authenticate, async (req, res) => {
-    const { data, error } = await req.supabase.from('personal_goals').select('id, user_id, name, target_amount, current_amount, created_at, updated_at'); // RLS cuida do filtro
+  const { data, error } = await req.supabase
+    .from('personal_goals')
+    .select('id, user_id, name, target_amount, current_amount, created_at, updated_at'); // RLS cuida do filtro
 
-    if (error) {
-        console.error('Erro ao buscar metas pessoais:', error.message);
-        return res.status(500).json({ error: 'Não foi possível buscar as metas pessoais.' });
-    }
-    res.status(200).json(data);
+  if (error) {
+    console.error('Erro ao buscar metas pessoais:', error.message);
+    return res.status(500).json({ error: 'Não foi possível buscar as metas pessoais.' });
+  }
+  res.status(200).json(data);
 });
 
 app.post('/api/personal-goals', authenticate, validate(personalGoalSchema), async (req, res) => {
-    const { id: userId } = req.user;
-    const { name, target_amount, current_amount } = req.body;
+  const { id: userId } = req.user;
+  const { name, target_amount, current_amount } = req.body;
 
-    const { data, error } = await req.supabase
-        .from('personal_goals')
-        .insert({ user_id: userId, name, target_amount, current_amount })
-        .select()
-        .single();
+  const { data, error } = await req.supabase
+    .from('personal_goals')
+    .insert({ user_id: userId, name, target_amount, current_amount })
+    .select()
+    .single();
 
-    if (error) {
-        console.error('Erro ao criar meta pessoal:', error.message);
-        return res.status(500).json({ error: 'Não foi possível criar a meta pessoal.' });
-    }
-    res.status(201).json({ message: 'Meta pessoal criada com sucesso!', goal: data });
+  if (error) {
+    console.error('Erro ao criar meta pessoal:', error.message);
+    return res.status(500).json({ error: 'Não foi possível criar a meta pessoal.' });
+  }
+  res.status(201).json({ message: 'Meta pessoal criada com sucesso!', goal: data });
 });
 
-app.put('/api/personal-goals/:id', authenticate, validate(personalGoalUpdateSchema), async (req, res) => {
+app.put(
+  '/api/personal-goals/:id',
+  authenticate,
+  validate(personalGoalUpdateSchema),
+  async (req, res) => {
     const { id: goalId } = req.params;
 
     const { data, error } = await req.supabase
-        .from('personal_goals')
-        .update(req.body)
-        .eq('id', goalId) // RLS garante a segurança
-        .select()
-        .single();
+      .from('personal_goals')
+      .update(req.body)
+      .eq('id', goalId) // RLS garante a segurança
+      .select()
+      .single();
 
     if (error) {
-        console.error('Erro ao atualizar meta pessoal:', error.message);
-        return res.status(500).json({ error: 'Não foi possível atualizar a meta pessoal.' });
+      console.error('Erro ao atualizar meta pessoal:', error.message);
+      return res.status(500).json({ error: 'Não foi possível atualizar a meta pessoal.' });
     }
     res.status(200).json({ message: 'Meta pessoal atualizada com sucesso!', goal: data });
-});
+  },
+);
 
 app.delete('/api/personal-goals/:id', authenticate, async (req, res) => {
-    const { id: goalId } = req.params;
+  const { id: goalId } = req.params;
 
-    const { error } = await req.supabase
-        .from('personal_goals')
-        .delete()
-        .eq('id', goalId); // RLS garante a segurança
+  const { error } = await req.supabase.from('personal_goals').delete().eq('id', goalId); // RLS garante a segurança
 
-    if (error) {
-        console.error('Erro ao deletar meta pessoal:', error.message);
-        return res.status(500).json({ error: 'Não foi possível deletar a meta pessoal.' });
-    }
-    res.status(204).send();
+  if (error) {
+    console.error('Erro ao deletar meta pessoal:', error.message);
+    return res.status(500).json({ error: 'Não foi possível deletar a meta pessoal.' });
+  }
+  res.status(204).send();
 });
 
 // Rotas de Transações Agendadas
@@ -397,22 +410,29 @@ app.get('/api/scheduled-transactions', authenticate, async (req, res) => {
   res.status(200).json(data);
 });
 
-app.put('/api/scheduled-transactions/:id', authenticate, validate(scheduledTransactionUpdateSchema), async (req, res) => {
-  const { id: transactionId } = req.params;
+app.put(
+  '/api/scheduled-transactions/:id',
+  authenticate,
+  validate(scheduledTransactionUpdateSchema),
+  async (req, res) => {
+    const { id: transactionId } = req.params;
 
-  const { data, error } = await req.supabase
-    .from('scheduled_transactions')
-    .update(req.body)
-    .eq('id', transactionId) // RLS garante a segurança
-    .select()
-    .single();
+    const { data, error } = await req.supabase
+      .from('scheduled_transactions')
+      .update(req.body)
+      .eq('id', transactionId) // RLS garante a segurança
+      .select()
+      .single();
 
-  if (error) {
-    console.error('Erro ao atualizar transação agendada:', error.message);
-    return res.status(500).json({ error: 'Não foi possível atualizar a transação agendada.' });
-  }
-  res.status(200).json({ message: 'Transação agendada atualizada com sucesso!', transaction: data });
-});
+    if (error) {
+      console.error('Erro ao atualizar transação agendada:', error.message);
+      return res.status(500).json({ error: 'Não foi possível atualizar a transação agendada.' });
+    }
+    res
+      .status(200)
+      .json({ message: 'Transação agendada atualizada com sucesso!', transaction: data });
+  },
+);
 
 app.delete('/api/scheduled-transactions/:id', authenticate, async (req, res) => {
   const { id: transactionId } = req.params;
@@ -431,9 +451,13 @@ app.delete('/api/scheduled-transactions/:id', authenticate, async (req, res) => 
 
 // Rotas de Perfil
 app.get('/api/profile', authenticate, async (req, res) => {
-  const { data, error } = await req.supabase.from('profiles').select('full_name, avatar_url').single();
+  const { data, error } = await req.supabase
+    .from('profiles')
+    .select('full_name, avatar_url')
+    .single();
 
-  if (error && error.code !== 'PGRST116') { // Ignora erro de "0 rows"
+  if (error && error.code !== 'PGRST116') {
+    // Ignora erro de "0 rows"
     console.error('Erro ao buscar perfil:', error.message);
     return res.status(500).json({ error: 'Não foi possível buscar o perfil.' });
   }
@@ -441,11 +465,7 @@ app.get('/api/profile', authenticate, async (req, res) => {
 });
 
 app.put('/api/profile', authenticate, validate(profileUpdateSchema), async (req, res) => {
-  const { data, error } = await req.supabase
-    .from('profiles')
-    .update(req.body)
-    .select()
-    .single();
+  const { data, error } = await req.supabase.from('profiles').update(req.body).select().single();
 
   if (error) {
     console.error('Erro ao atualizar perfil:', error.message);
@@ -455,47 +475,61 @@ app.put('/api/profile', authenticate, validate(profileUpdateSchema), async (req,
 });
 
 // Rotas de Relacionamento de Casal
-app.post('/api/couple-relationships/request', authenticate, validate(coupleRequestSchema), async (req, res) => {
-  const { id: userId } = req.user;
-  const { partner_email } = req.body;
+app.post(
+  '/api/couple-relationships/request',
+  authenticate,
+  validate(coupleRequestSchema),
+  async (req, res) => {
+    const { id: userId } = req.user;
+    const { partner_email } = req.body;
 
-  const { data: partnerId, error: rpcError } = await req.supabase
-    .rpc('get_user_id_by_email', { user_email: partner_email });
+    const { data: partnerId, error: rpcError } = await req.supabase.rpc('get_user_id_by_email', {
+      user_email: partner_email,
+    });
 
-  if (rpcError || !partnerId) {
-    return res.status(404).json({ error: 'Parceiro não encontrado.' });
-  }
-  
-  if (userId === partnerId) {
-    return res.status(400).json({ error: 'Você não pode enviar um pedido para si mesmo.' });
-  }
-
-  // Usar supabaseAdmin para verificar/criar perfil do parceiro
-  const { error: profileError } = await supabaseAdmin.from('profiles').select('id').eq('id', partnerId).single();
-  if (profileError && profileError.code === 'PGRST116') {
-      const { error: insertError } = await supabaseAdmin.from('profiles').insert({ id: partnerId, full_name: partner_email.split('@')[0] });
-      if (insertError) {
-          console.error('Erro ao criar perfil para parceiro:', insertError.message);
-          return res.status(500).json({ error: 'Não foi possível configurar o parceiro.' });
-      }
-  }
-
-  const { data, error } = await req.supabase
-    .from('couple_relationships')
-    .insert({ user1_id: userId, user2_id: partnerId, status: 'pending' })
-    .select()
-    .single();
-
-  if (error) {
-    // Código '23505' é violação de constraint unique, significa que já existe
-    if (error.code === '23505') {
-      return res.status(409).json({ error: 'Um relacionamento ou pedido já existe com este usuário.' });
+    if (rpcError || !partnerId) {
+      return res.status(404).json({ error: 'Parceiro não encontrado.' });
     }
-    console.error('Erro ao enviar pedido de conexão:', error.message);
-    return res.status(500).json({ error: 'Não foi possível enviar o pedido de conexão.' });
-  }
-  res.status(201).json({ message: 'Pedido de conexão enviado com sucesso!', relationship: data });
-});
+
+    if (userId === partnerId) {
+      return res.status(400).json({ error: 'Você não pode enviar um pedido para si mesmo.' });
+    }
+
+    // Usar supabaseAdmin para verificar/criar perfil do parceiro
+    const { error: profileError } = await supabaseAdmin
+      .from('profiles')
+      .select('id')
+      .eq('id', partnerId)
+      .single();
+    if (profileError && profileError.code === 'PGRST116') {
+      const { error: insertError } = await supabaseAdmin
+        .from('profiles')
+        .insert({ id: partnerId, full_name: partner_email.split('@')[0] });
+      if (insertError) {
+        console.error('Erro ao criar perfil para parceiro:', insertError.message);
+        return res.status(500).json({ error: 'Não foi possível configurar o parceiro.' });
+      }
+    }
+
+    const { data, error } = await req.supabase
+      .from('couple_relationships')
+      .insert({ user1_id: userId, user2_id: partnerId, status: 'pending' })
+      .select()
+      .single();
+
+    if (error) {
+      // Código '23505' é violação de constraint unique, significa que já existe
+      if (error.code === '23505') {
+        return res
+          .status(409)
+          .json({ error: 'Um relacionamento ou pedido já existe com este usuário.' });
+      }
+      console.error('Erro ao enviar pedido de conexão:', error.message);
+      return res.status(500).json({ error: 'Não foi possível enviar o pedido de conexão.' });
+    }
+    res.status(201).json({ message: 'Pedido de conexão enviado com sucesso!', relationship: data });
+  },
+);
 
 app.put('/api/couple-relationships/:id/accept', authenticate, async (req, res) => {
   const { id: relationshipId } = req.params;
@@ -522,11 +556,13 @@ app.get('/api/couple-relationships', authenticate, async (req, res) => {
 
   const { data, error } = await req.supabase
     .from('couple_relationships')
-    .select(`
+    .select(
+      `
       *,
       user1_profile:user1_id(full_name),
       user2_profile:user2_id(full_name)
-    `)
+    `,
+    )
     .or(`user1_id.eq.${userId},user2_id.eq.${userId}`);
 
   if (error) {
@@ -593,10 +629,7 @@ app.put('/api/budgets/:id', authenticate, validate(budgetSchema), async (req, re
 app.delete('/api/budgets/:id', authenticate, async (req, res) => {
   const { id: budgetId } = req.params;
 
-  const { error } = await req.supabase
-    .from('budgets')
-    .delete()
-    .eq('id', budgetId);
+  const { error } = await req.supabase.from('budgets').delete().eq('id', budgetId);
 
   if (error) {
     console.error('Erro ao deletar orçamento:', error.message);
@@ -608,192 +641,220 @@ app.delete('/api/budgets/:id', authenticate, async (req, res) => {
 // ... (outras rotas de relacionamento de casal podem ser adicionadas aqui) ...
 
 // Rota de Auth
-app.post('/api/auth/reset-password', authenticate, validate(passwordResetSchema), async (req, res) => {
-  const { new_password } = req.body;
-  const { error } = await req.supabase.auth.updateUser({ password: new_password });
+app.post(
+  '/api/auth/reset-password',
+  authenticate,
+  validate(passwordResetSchema),
+  async (req, res) => {
+    const { new_password } = req.body;
+    const { error } = await req.supabase.auth.updateUser({ password: new_password });
 
-  if (error) {
-    console.error('Erro ao redefinir senha:', error.message);
-    return res.status(500).json({ error: 'Não foi possível redefinir a senha.' });
-  }
-  res.status(200).json({ message: 'Senha redefinida com sucesso!' });
-});
+    if (error) {
+      console.error('Erro ao redefinir senha:', error.message);
+      return res.status(500).json({ error: 'Não foi possível redefinir a senha.' });
+    }
+    res.status(200).json({ message: 'Senha redefinida com sucesso!' });
+  },
+);
 
 // Rotas de Relatórios e Análises
-app.get('/api/reports/expenses-by-category', authenticate, validate(reportQuerySchema), async (req, res) => {
-  const { id: userId } = req.user;
-  const { startDate, endDate } = req.query;
+app.get(
+  '/api/reports/expenses-by-category',
+  authenticate,
+  validate(reportQuerySchema),
+  async (req, res) => {
+    const { id: userId } = req.user;
+    const { startDate, endDate } = req.query;
 
-  let query = req.supabase
-    .from('transactions')
-    .select('category_id, amount, categories(name)')
-    .eq('user_id', userId)
-    .eq('type', 'expense');
-
-  if (startDate) query = query.gte('date', startDate);
-  if (endDate) query = query.lte('date', endDate);
-
-  const { data, error } = await query;
-
-  if (error) {
-    console.error('Erro ao buscar despesas por categoria:', error.message);
-    return res.status(500).json({ error: 'Não foi possível buscar despesas por categoria.' });
-  }
-
-  const expensesByCategory = data.reduce((acc, transaction) => {
-    const categoryName = transaction.categories?.name || 'Desconhecida';
-    acc[categoryName] = (acc[categoryName] || 0) + transaction.amount;
-    return acc;
-  }, {});
-
-  res.status(200).json(expensesByCategory);
-});
-
-// Rotas de Relatórios e Análises
-app.get('/api/reports/expenses-by-category', authenticate, validate(reportQuerySchema), async (req, res) => {
-  const { id: userId } = req.user;
-  const { startDate, endDate } = req.query;
-
-  let query = req.supabase
-    .from('transactions')
-    .select('category_id, amount, categories(name)')
-    .eq('user_id', userId)
-    .eq('type', 'expense');
-
-  if (startDate) query = query.gte('date', startDate);
-  if (endDate) query = query.lte('date', endDate);
-
-  const { data, error } = await query;
-
-  if (error) {
-    console.error('Erro ao buscar despesas por categoria:', error.message);
-    return res.status(500).json({ error: 'Não foi possível buscar despesas por categoria.' });
-  }
-
-  const expensesByCategory = data.reduce((acc, transaction) => {
-    const categoryName = transaction.categories?.name || 'Desconhecida';
-    acc[categoryName] = (acc[categoryName] || 0) + transaction.amount;
-    return acc;
-  }, {});
-
-  res.status(200).json(expensesByCategory);
-});
-
-app.get('/api/reports/income-expense-over-time', authenticate, validate(reportQuerySchema), async (req, res) => {
-  const { id: userId } = req.user;
-  const { startDate, endDate } = req.query;
-
-  let query = req.supabase
-    .from('transactions')
-    .select('type, amount, date')
-    .eq('user_id', userId);
-
-  if (startDate) query = query.gte('date', startDate);
-  if (endDate) query = query.lte('date', endDate);
-
-  const { data, error } = await query.order('date', { ascending: true });
-
-  if (error) {
-    console.error('Erro ao buscar dados de receita/despesa por tempo:', error.message);
-    return res.status(500).json({ error: 'Não foi possível buscar dados de receita/despesa por tempo.' });
-  }
-
-  const monthlyData = data.reduce((acc, transaction) => {
-    const month = new Date(transaction.date).toISOString().substring(0, 7); // YYYY-MM
-    if (!acc[month]) {
-      acc[month] = { income: 0, expense: 0 };
-    }
-    if (transaction.type === 'income') {
-      acc[month].income += transaction.amount;
-    } else {
-      acc[month].expense += transaction.amount;
-    }
-    return acc;
-  }, {});
-
-  const formattedData = Object.keys(monthlyData).sort().map(month => ({
-    month,
-    income: monthlyData[month].income,
-    expense: monthlyData[month].expense,
-  }));
-
-  res.status(200).json(formattedData);
-});
-
-app.get('/api/reports/budget-vs-actual', authenticate, validate(reportQuerySchema), async (req, res) => {
-  const { id: userId } = req.user;
-  const { startDate, endDate } = req.query;
-
-  try {
-    // Fetch budgets for the user
-    let budgetQuery = req.supabase
-      .from('budgets')
-      .select('category_id, budget_amount, start_date, end_date')
-      .eq('user_id', userId);
-
-    if (startDate) budgetQuery = budgetQuery.gte('start_date', startDate);
-    if (endDate) budgetQuery = budgetQuery.lte('end_date', endDate);
-
-    const { data: budgets, error: budgetError } = await budgetQuery;
-
-    if (budgetError) throw budgetError;
-
-    // Fetch actual expenses for the user within the budget periods
-    let transactionQuery = req.supabase
+    let query = req.supabase
       .from('transactions')
-      .select('category_id, amount')
+      .select('category_id, amount, categories(name)')
       .eq('user_id', userId)
       .eq('type', 'expense');
 
-    if (startDate) transactionQuery = transactionQuery.gte('date', startDate);
-    if (endDate) transactionQuery = transactionQuery.lte('date', endDate);
+    if (startDate) query = query.gte('date', startDate);
+    if (endDate) query = query.lte('date', endDate);
 
-    const { data: transactions, error: transactionError } = await transactionQuery;
+    const { data, error } = await query;
 
-    if (transactionError) throw transactionError;
+    if (error) {
+      console.error('Erro ao buscar despesas por categoria:', error.message);
+      return res.status(500).json({ error: 'Não foi possível buscar despesas por categoria.' });
+    }
 
-    // Aggregate actual spending by category
-    const actualSpendingByCategory = transactions.reduce((acc, tx) => {
-      acc[tx.category_id] = (acc[tx.category_id] || 0) + tx.amount;
+    const expensesByCategory = data.reduce((acc, transaction) => {
+      const categoryName = transaction.categories?.name || 'Desconhecida';
+      acc[categoryName] = (acc[categoryName] || 0) + transaction.amount;
       return acc;
     }, {});
 
-    // Combine budget and actual spending data
-    const reportData = budgets.map(budget => {
-      const actual = actualSpendingByCategory[budget.category_id] || 0;
-      return {
-        category_id: budget.category_id,
-        budgeted: budget.budget_amount,
-        actual: actual,
-        remaining: budget.budget_amount - actual,
-      };
-    });
+    res.status(200).json(expensesByCategory);
+  },
+);
 
-    // Fetch category names
-    const categoryIds = [...new Set(reportData.map(item => item.category_id))];
-    const { data: categories, error: categoryError } = await req.supabase
-      .from('categories')
-      .select('id, name')
-      .in('id', categoryIds);
+// Rotas de Relatórios e Análises
+app.get(
+  '/api/reports/expenses-by-category',
+  authenticate,
+  validate(reportQuerySchema),
+  async (req, res) => {
+    const { id: userId } = req.user;
+    const { startDate, endDate } = req.query;
 
-    if (categoryError) throw categoryError;
+    let query = req.supabase
+      .from('transactions')
+      .select('category_id, amount, categories(name)')
+      .eq('user_id', userId)
+      .eq('type', 'expense');
 
-    const categoryMap = new Map(categories.map(cat => [cat.id, cat.name]));
+    if (startDate) query = query.gte('date', startDate);
+    if (endDate) query = query.lte('date', endDate);
 
-    const formattedReportData = reportData.map(item => ({
-      categoryName: categoryMap.get(item.category_id) || 'Desconhecida',
-      budgeted: item.budgeted,
-      actual: item.actual,
-      remaining: item.remaining,
-    }));
+    const { data, error } = await query;
 
-    res.status(200).json(formattedReportData);
+    if (error) {
+      console.error('Erro ao buscar despesas por categoria:', error.message);
+      return res.status(500).json({ error: 'Não foi possível buscar despesas por categoria.' });
+    }
 
-  } catch (err) {
-    console.error('Erro ao buscar relatório de orçamento vs. real:', err.message);
-    res.status(500).json({ error: 'Não foi possível buscar o relatório de orçamento vs. real.' });
-  }
-});
+    const expensesByCategory = data.reduce((acc, transaction) => {
+      const categoryName = transaction.categories?.name || 'Desconhecida';
+      acc[categoryName] = (acc[categoryName] || 0) + transaction.amount;
+      return acc;
+    }, {});
+
+    res.status(200).json(expensesByCategory);
+  },
+);
+
+app.get(
+  '/api/reports/income-expense-over-time',
+  authenticate,
+  validate(reportQuerySchema),
+  async (req, res) => {
+    const { id: userId } = req.user;
+    const { startDate, endDate } = req.query;
+
+    let query = req.supabase
+      .from('transactions')
+      .select('type, amount, date')
+      .eq('user_id', userId);
+
+    if (startDate) query = query.gte('date', startDate);
+    if (endDate) query = query.lte('date', endDate);
+
+    const { data, error } = await query.order('date', { ascending: true });
+
+    if (error) {
+      console.error('Erro ao buscar dados de receita/despesa por tempo:', error.message);
+      return res
+        .status(500)
+        .json({ error: 'Não foi possível buscar dados de receita/despesa por tempo.' });
+    }
+
+    const monthlyData = data.reduce((acc, transaction) => {
+      const month = new Date(transaction.date).toISOString().substring(0, 7); // YYYY-MM
+      if (!acc[month]) {
+        acc[month] = { income: 0, expense: 0 };
+      }
+      if (transaction.type === 'income') {
+        acc[month].income += transaction.amount;
+      } else {
+        acc[month].expense += transaction.amount;
+      }
+      return acc;
+    }, {});
+
+    const formattedData = Object.keys(monthlyData)
+      .sort()
+      .map((month) => ({
+        month,
+        income: monthlyData[month].income,
+        expense: monthlyData[month].expense,
+      }));
+
+    res.status(200).json(formattedData);
+  },
+);
+
+app.get(
+  '/api/reports/budget-vs-actual',
+  authenticate,
+  validate(reportQuerySchema),
+  async (req, res) => {
+    const { id: userId } = req.user;
+    const { startDate, endDate } = req.query;
+
+    try {
+      // Fetch budgets for the user
+      let budgetQuery = req.supabase
+        .from('budgets')
+        .select('category_id, budget_amount, start_date, end_date')
+        .eq('user_id', userId);
+
+      if (startDate) budgetQuery = budgetQuery.gte('start_date', startDate);
+      if (endDate) budgetQuery = budgetQuery.lte('end_date', endDate);
+
+      const { data: budgets, error: budgetError } = await budgetQuery;
+
+      if (budgetError) throw budgetError;
+
+      // Fetch actual expenses for the user within the budget periods
+      let transactionQuery = req.supabase
+        .from('transactions')
+        .select('category_id, amount')
+        .eq('user_id', userId)
+        .eq('type', 'expense');
+
+      if (startDate) transactionQuery = transactionQuery.gte('date', startDate);
+      if (endDate) transactionQuery = transactionQuery.lte('date', endDate);
+
+      const { data: transactions, error: transactionError } = await transactionQuery;
+
+      if (transactionError) throw transactionError;
+
+      // Aggregate actual spending by category
+      const actualSpendingByCategory = transactions.reduce((acc, tx) => {
+        acc[tx.category_id] = (acc[tx.category_id] || 0) + tx.amount;
+        return acc;
+      }, {});
+
+      // Combine budget and actual spending data
+      const reportData = budgets.map((budget) => {
+        const actual = actualSpendingByCategory[budget.category_id] || 0;
+        return {
+          category_id: budget.category_id,
+          budgeted: budget.budget_amount,
+          actual: actual,
+          remaining: budget.budget_amount - actual,
+        };
+      });
+
+      // Fetch category names
+      const categoryIds = [...new Set(reportData.map((item) => item.category_id))];
+      const { data: categories, error: categoryError } = await req.supabase
+        .from('categories')
+        .select('id, name')
+        .in('id', categoryIds);
+
+      if (categoryError) throw categoryError;
+
+      const categoryMap = new Map(categories.map((cat) => [cat.id, cat.name]));
+
+      const formattedReportData = reportData.map((item) => ({
+        categoryName: categoryMap.get(item.category_id) || 'Desconhecida',
+        budgeted: item.budgeted,
+        actual: item.actual,
+        remaining: item.remaining,
+      }));
+
+      res.status(200).json(formattedReportData);
+    } catch (err) {
+      console.error('Erro ao buscar relatório de orçamento vs. real:', err.message);
+      res.status(500).json({ error: 'Não foi possível buscar o relatório de orçamento vs. real.' });
+    }
+  },
+);
 
 // Rota para Detecção de Anomalias (Exemplo com API Hipotética de Terceiros)
 app.post('/api/anomaly-detection', authenticate, async (req, res) => {
@@ -810,7 +871,7 @@ app.post('/api/anomaly-detection', authenticate, async (req, res) => {
     // const anomalyResults = response.data;
 
     // Para fins de demonstração, vamos simular alguns resultados de anomalia
-    const anomalyResults = transactions.map(tx => ({
+    const anomalyResults = transactions.map((tx) => ({
       ...tx,
       is_anomaly: Math.random() < 0.1, // 10% de chance de ser uma anomalia
       anomaly_score: Math.random().toFixed(2),
@@ -818,7 +879,6 @@ app.post('/api/anomaly-detection', authenticate, async (req, res) => {
     }));
 
     res.status(200).json(anomalyResults);
-
   } catch (err) {
     console.error('Erro ao processar detecção de anomalias:', err.message);
     res.status(500).json({ error: 'Não foi possível realizar a detecção de anomalias.' });
@@ -838,14 +898,18 @@ app.get('/api/couple-dashboard', authenticate, async (req, res) => {
       .eq('status', 'accepted')
       .single();
 
-    if (relationshipError && relationshipError.code !== 'PGRST116') { // PGRST116 = no rows found
+    if (relationshipError && relationshipError.code !== 'PGRST116') {
+      // PGRST116 = no rows found
       console.error('Erro ao buscar relacionamento de casal:', relationshipError.message);
       return res.status(500).json({ error: 'Não foi possível buscar o relacionamento de casal.' });
     }
 
     let partnerId = null;
     if (relationshipData) {
-      partnerId = relationshipData.user1_id === userId ? relationshipData.user2_id : relationshipData.user1_id;
+      partnerId =
+        relationshipData.user1_id === userId
+          ? relationshipData.user2_id
+          : relationshipData.user1_id;
     }
 
     const userIdsToFetch = [userId];
@@ -879,7 +943,6 @@ app.get('/api/couple-dashboard', authenticate, async (req, res) => {
       transactions: transactionsData || [],
       goals: goalsData || [],
     });
-
   } catch (err) {
     console.error('Erro inesperado no couple-dashboard:', err.message);
     res.status(500).json({ error: 'Erro interno do servidor.' });

@@ -68,6 +68,7 @@ const Dashboard = () => {
 
         if (transactionsError) throw transactionsError;
         setTransactions(transactionsData || []);
+        console.log("Fetched transactions:", transactionsData);
 
         // Fetch goals
         const { data: goalsData, error: goalsError } = await supabase
@@ -77,6 +78,7 @@ const Dashboard = () => {
 
         if (goalsError) throw goalsError;
         setGoals(goalsData || []);
+        console.log("Fetched goals:", goalsData);
 
         // Fetch categories
         const { data: categoriesData, error: categoriesError } = await supabase
@@ -85,6 +87,7 @@ const Dashboard = () => {
 
         if (categoriesError) throw categoriesError;
         setCategories(categoriesData || []);
+        console.log("Fetched categories:", categoriesData);
 
       } catch (err: any) {
         setError(err.message);
@@ -106,6 +109,7 @@ const Dashboard = () => {
           }
           const data: CoupleData = await response.json();
           setCoupleData(data);
+          console.log("Fetched couple data:", data);
         } catch (err: any) {
           console.error("Couple data fetch error:", err.message);
           toast.error(`Erro ao buscar dados do casal: ${err.message}`);
@@ -215,21 +219,29 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="bg-white p-4 rounded-lg">
           <h2 className="text-lg font-semibold mb-2">Expenses by Category</h2>
-          <Pie data={pieChartData} />
+          {Object.keys(expenseByCategory).length > 0 ? (
+            <Pie data={pieChartData} />
+          ) : (
+            <p className="text-center text-gray-500">Nenhuma despesa por categoria encontrada.</p>
+          )}
         </div>
         <div className="bg-white p-4 rounded-lg">
           <h2 className="text-lg font-semibold mb-2">Goals Progress</h2>
-          {goalsProgress.map(goal => (
-            <div key={goal.id} className="mb-2">
-              <div className="flex justify-between">
-                <span>{goal.categoryName}</span>
-                <span>{goal.spent.toFixed(2)} / {goal.amount.toFixed(2)}</span>
+          {goalsProgress.length > 0 ? (
+            goalsProgress.map(goal => (
+              <div key={goal.id} className="mb-2">
+                <div className="flex justify-between">
+                  <span>{goal.categoryName}</span>
+                  <span>{goal.spent.toFixed(2)} / {goal.amount.toFixed(2)}</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2.5">
+                  <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: `${goal.progress}%` }}></div>
+                </div>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-2.5">
-                <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: `${goal.progress}%` }}></div>
-              </div>
-            </div>
-          ))}
+            ))
+          ) : (
+            <p className="text-center text-gray-500">Nenhuma meta encontrada.</p>
+          )}
         </div>
       </div>
 
