@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../services/supabase';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContext/useAuth';
 import { Pie } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -107,7 +107,8 @@ const Dashboard = () => {
           const data: CoupleData = await response.json();
           setCoupleData(data);
         } catch (err: any) {
-          console.error("Couple data fetch error:", err.message)
+          console.error("Couple data fetch error:", err.message);
+          toast.error(`Erro ao buscar dados do casal: ${err.message}`);
         }
       }
     };

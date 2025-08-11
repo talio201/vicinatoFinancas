@@ -13,9 +13,6 @@ import ReportsPage from './pages/ReportsPage';
 import UpdatePasswordPage from './pages/UpdatePasswordPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import toast from 'react-hot-toast';
-
-import ProtectedRoute from './components/ProtectedRoute';
-import toast from 'react-hot-toast';
 import { useEffect } from 'react';
 import { supabase } from './services/supabase';
 
