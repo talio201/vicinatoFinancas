@@ -20,6 +20,24 @@ CREATE OR REPLACE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
 
+CREATE TABLE IF NOT EXISTS categories (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  name VARCHAR(50) NOT NULL UNIQUE,
+  user_id UUID REFERENCES auth.users(id)
+);
+
+CREATE TABLE IF NOT EXISTS budgets (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) NOT NULL,
+  category_id UUID REFERENCES categories(id) NOT NULL,
+  budget_amount REAL NOT NULL,
+  start_date DATE NOT NULL,
+  end_date DATE NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(user_id, category_id, start_date, end_date)
+);
+
 CREATE TABLE IF NOT EXISTS transactions (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID REFERENCES auth.users(id) NOT NULL,
@@ -32,13 +50,7 @@ CREATE TABLE IF NOT EXISTS transactions (
 );
 
 ALTER TABLE transactions
-ADD COLUMN budget_id UUID REFERENCES budgets(id);
-
-CREATE TABLE IF NOT EXISTS categories (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  name VARCHAR(50) NOT NULL UNIQUE,
-  user_id UUID REFERENCES auth.users(id)
-);
+ADD COLUMN IF NOT EXISTS budget_id UUID REFERENCES budgets(id);
 
 CREATE TABLE IF NOT EXISTS goals (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -70,18 +82,6 @@ CREATE TABLE IF NOT EXISTS scheduled_transactions (
   date TIMESTAMPTZ NOT NULL,
   status VARCHAR(20) NOT NULL DEFAULT 'scheduled',
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE TABLE IF NOT EXISTS budgets (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES auth.users(id) NOT NULL,
-  category_id UUID REFERENCES categories(id) NOT NULL,
-  budget_amount REAL NOT NULL,
-  start_date DATE NOT NULL,
-  end_date DATE NOT NULL,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  UNIQUE(user_id, category_id, start_date, end_date)
 );
 
 CREATE TABLE IF NOT EXISTS couple_relationships (
