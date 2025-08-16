@@ -303,18 +303,20 @@ app.get('/api/goals', authenticate, async (req, res) => {
 });
 
 app.post('/api/goals', authenticate, validate(goalSchema), async (req, res) => {
+  console.log(`[INCOMING REQUEST /api/goals] Body: ${JSON.stringify(req.body, null, 2)}`);
+  console.log(`[INCOMING REQUEST /api/goals] Body: ${JSON.stringify(req.body, null, 2)}`);
   const { id: userId } = req.user;
-  const { category, amount, month } = req.body;
+  const { category_id, amount, month } = req.body;
 
   const { data, error } = await req.supabase
     .from('goals')
-    .upsert({ user_id: userId, category, amount, month }, { onConflict: 'user_id,category,month' })
+    .insert({ user_id: userId, category_id, amount, month })
     .select('id, user_id, category_id, amount, month, created_at')
     .single();
 
   if (error) {
     console.error('Erro ao salvar meta:', error.message);
-    return res.status(500).json({ error: 'Não foi possível salvar a meta.' });
+    return res.status(500).json({ error: `Database error: ${error.message}` });
   }
   res.status(201).json({ message: 'Meta salva com sucesso!', goal: data });
 });

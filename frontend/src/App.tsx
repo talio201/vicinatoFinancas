@@ -45,7 +45,7 @@ function App() {
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'couple_relationships' },
-        (payload) => {
+        () => {
           toast.info(`Novo pedido de conexão de casal recebido!`);
         }
       )
@@ -145,4 +145,3 @@ function App() {
 }
 
 export default App;
-// Trigger new build for backend URL update - 2

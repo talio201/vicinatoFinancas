@@ -8,6 +8,11 @@ interface BudgetFormProps {
   onBudgetCreated: () => void;
 }
 
+interface Category {
+  id: string;
+  name: string;
+}
+
 const budgetFormSchema = Yup.object().shape({
   category_id: Yup.string().uuid('Selecione uma categoria válida').required('Categoria é obrigatória'),
   budget_amount: Yup.number().positive('O valor do orçamento deve ser positivo').required('Valor é obrigatório'),
@@ -17,7 +22,7 @@ const budgetFormSchema = Yup.object().shape({
 
 const BudgetForm: React.FC<BudgetFormProps> = ({ onBudgetCreated }) => {
   const { supabase } = useAuth();
-  const [categories, setCategories] = React.useState<any[]>([]);
+  const [categories, setCategories] = React.useState<Category[]>([]);
 
   React.useEffect(() => {
     const fetchCategories = async () => {

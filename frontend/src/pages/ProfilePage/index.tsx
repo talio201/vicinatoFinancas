@@ -11,7 +11,7 @@ import { supabase } from '../../services/supabase';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
 
-// --- Interfaces ---
+
 interface Profile {
   full_name: string;
   avatar_url?: string;
@@ -26,7 +26,7 @@ interface CoupleRelationship {
   user2_profile?: { full_name: string; } | null;
 }
 
-// --- Validation Schemas ---
+
 const profileSchema = Yup.object().shape({
   full_name: Yup.string().required('Nome completo é obrigatório'),
 });
@@ -46,7 +46,7 @@ const matchRequestSchema = Yup.object().shape({
     .required('Email do parceiro é obrigatório'),
 });
 
-// --- Helper Components ---
+
 const SectionCard: React.FC<{ title: string; children: React.ReactNode; icon?: React.ReactNode }> = ({ title, children, icon }) => (
   <div className="bg-white dark:bg-gray-800 shadow-xl rounded-2xl p-6 transition-transform duration-300 hover:scale-105 hover:shadow-2xl">
     <div className="flex items-center mb-4">
@@ -57,21 +57,26 @@ const SectionCard: React.FC<{ title: string; children: React.ReactNode; icon?: R
   </div>
 );
 
-const InputField: React.FC<any> = ({ id, label, ...props }) => (
+interface InputFieldProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  id: string;
+  label: string;
+}
+
+const InputField: React.FC<InputFieldProps> = ({ id, label, ...props }) => (
   <div>
     <label htmlFor={id} className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{label}</label>
     <input id={id} {...props} className="input w-full py-2 px-3 rounded-xl dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:bg-gray-200 disabled:dark:bg-gray-600" />
   </div>
 );
 
-// --- Main Component ---
+
 export const ProfilePage = () => {
   const { user, session, loading: authLoading } = useAuth();
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
-  // --- Queries ---
+  
   const { data: profile, isLoading, error } = useQuery<Profile>({
     queryKey: ['profile', user?.id],
     queryFn: async () => {
@@ -102,7 +107,7 @@ export const ProfilePage = () => {
   const pendingSentRequest = relationships.find(rel => rel.status === 'pending' && rel.user1_id === user?.id);
   const pendingReceivedRequests = relationships.filter(rel => rel.status === 'pending' && rel.user2_id === user?.id);
 
-  // --- Mutations ---
+  
   const sendMatchRequestMutation = useMutation({
     mutationFn: async (data: { partner_email: string }) => {
       if (!session) throw new Error('Autenticação necessária.');
@@ -223,7 +228,7 @@ export const ProfilePage = () => {
     onError: (err: Error) => toast.error(err.message),
   });
 
-  // --- Formik Instances ---
+  
   const profileFormik = useFormik({ initialValues: { full_name: '' }, validationSchema: profileSchema, onSubmit: (values) => updateProfileMutation.mutate(values) });
   const passwordFormik = useFormik({ initialValues: { new_password: '', confirm_password: '' }, validationSchema: passwordSchema, onSubmit: (values) => resetPasswordMutation.mutate(values) });
   const matchRequestFormik = useFormik({ initialValues: { partner_email: '' }, validationSchema: matchRequestSchema, onSubmit: (values) => sendMatchRequestMutation.mutate(values) });
@@ -233,7 +238,7 @@ export const ProfilePage = () => {
       profileFormik.setValues({ full_name: profile.full_name || '' });
       setAvatarUrl(profile.avatar_url || null);
     }
-  }, [profile]);
+  }, [profile, profileFormik]);
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0 || !user) return;
@@ -246,8 +251,9 @@ export const ProfilePage = () => {
       setAvatarUrl(publicUrl);
       updateProfileMutation.mutate({ ...profileFormik.values, avatar_url: publicUrl });
       toast.success('Avatar atualizado!');
-    } catch (error: any) {
-      toast.error(`Erro no upload: ${error.message}`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      toast.error(`Erro no upload: ${message}`);
     }
   };
 

@@ -37,7 +37,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const fetchProfile = async () => {
-      if (user && !fullName) { // Only fetch if user exists and fullName is not yet set
+      if (user && !fullName) {
         const { data, error } = await supabase
           .from('profiles')
           .select('full_name')
@@ -53,7 +53,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     fetchProfile();
-  }, [user, fullName]); // Depend on user and fullName to avoid unnecessary fetches
+  }, [user, fullName]);
 
   const value = {
     session,

@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect, useState } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
@@ -15,6 +15,8 @@ interface Transaction { id: string; type: 'income' | 'expense'; amount: number; 
 interface CoupleRelationship {
   id: string;
   status: 'pending' | 'accepted' | 'rejected';
+  user1_id: string;
+  user2_id: string;
 }
 
 const formatCurrency = (value: number) => `R$ ${value.toFixed(2).replace('.', ',')}`;
@@ -72,12 +74,14 @@ export function CoupleDashboardPage() {
     queryKey: ['coupleRelationship', user?.id, 'accepted'],
     queryFn: async () => {
       if (!session) return null;
-      const response = await fetch(`${API_BASE_URL}/api/couple-relationships?status=accepted`, {
+      const response = await fetch(`${API_BASE_URL}/api/couple-relationships`, {
         headers: { Authorization: `Bearer ${session.access_token}` },
       });
       if (!response.ok) throw new Error('Não foi possível buscar o relacionamento.');
-      const relationships = await response.json();
-      return relationships[0] || null; // A API agora retorna apenas o relacionamento aceito
+      const relationships: CoupleRelationship[] = await response.json();
+      console.log("Fetched couple relationships:", relationships);
+      const acceptedRelationship = relationships.find(rel => rel.status === 'accepted' && (rel.user1_id === user?.id || rel.user2_id === user?.id));
+      return acceptedRelationship || null;
     },
     enabled: !!session && !!user?.id,
   });
@@ -94,26 +98,14 @@ export function CoupleDashboardPage() {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to fetch transactions');
       }
-      return (await response.json()).sort((a: Transaction, b: Transaction) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      const data = (await response.json()).sort((a: Transaction, b: Transaction) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      console.log("Fetched couple transactions:", data);
+      return data;
     },
-    enabled: !!session && hasAcceptedRelationship, // Only fetch if there is an accepted relationship
+    enabled: !!session && hasAcceptedRelationship,
   });
 
-  const [animateBalance, setAnimateBalance] = useState(false);
-
-  useEffect(() => {
-    const summary = transactions.reduce((acc, tx) => {
-      if (tx.type === 'income') acc.income += tx.amount;
-      else acc.expense += tx.amount;
-      return acc;
-    }, { income: 0, expense: 0 });
-
-    if (summary.income - summary.expense < 0) {
-      setAnimateBalance(true);
-      const timer = setTimeout(() => setAnimateBalance(false), 20000);
-      return () => clearTimeout(timer);
-    }
-  }, [transactions]);
+  
 
   const isLoading = authLoading || isLoadingRelationship || (hasAcceptedRelationship && isLoadingTransactions);
 
@@ -165,7 +157,7 @@ export function CoupleDashboardPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 my-8">
           <FinancialSummaryCard title="Receita Total do Casal" amount={financialSummary.income} color="text-green-500" icon={<FiTrendingUp />} />
           <FinancialSummaryCard title="Despesa Total do Casal" amount={financialSummary.expense} color="text-red-500" icon={<FiTrendingDown />} />
-          <div className={`bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-md flex flex-col justify-center items-center text-center ${animateBalance ? 'animate-pulse' : ''}`}>
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-md flex flex-col justify-center items-center text-center">
               <h3 className="text-base font-semibold text-gray-500">Saldo Atual do Casal</h3>
               <p className={`text-4xl font-bold my-2 ${financialSummary.income - financialSummary.expense >= 0 ? 'text-green-500' : 'text-red-500'}`}>{formatCurrency(financialSummary.income - financialSummary.expense)}</p>
               <p className="text-sm text-gray-400">Balanço de todas as transações do casal</p>
@@ -174,9 +166,15 @@ export function CoupleDashboardPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="lg:col-span-1 space-y-6">
-            <MainChart data={transactions} />
+            {transactions.length > 0 ? (
+              <MainChart data={transactions} />
+            ) : (
+              <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-md h-[400px] flex items-center justify-center">
+                <p className="text-gray-500 dark:text-gray-400">Nenhuma transação encontrada para o casal.</p>
+              </div>
+            )}
           </div>
-          {/* Futuramente, adicionar outras seções consolidadas aqui */}
+          
         </div>
       </div>
     </Layout>

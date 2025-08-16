@@ -1,10 +1,10 @@
-export const exportToCsv = (data: any[], filename: string) => {
+export const exportToCsv = <T extends Record<string, unknown>>(data: T[], filename: string) => {
   if (!data.length) {
     console.warn("No data to export.");
     return;
   }
 
-  const headers = Object.keys(data[0]);
+  const headers = Object.keys(data[0]) as (keyof T)[];
   const csv = [
     headers.join(','),
     ...data.map(row => headers.map(fieldName => JSON.stringify(row[fieldName])).join(','))

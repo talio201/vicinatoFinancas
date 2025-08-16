@@ -26,12 +26,21 @@ ChartJS.register(
   LineElement
 );
 
+interface Anomaly {
+  id: string;
+  description: string;
+  amount: number;
+  date: string;
+  anomaly_score: number;
+  is_anomaly: boolean;
+}
+
 const ReportsPage: React.FC = () => {
   const { supabase } = useAuth();
   const [expensesByCategory, setExpensesByCategory] = useState<{ [key: string]: number }>({});
   const [incomeExpenseOverTime, setIncomeExpenseOverTime] = useState<Array<{ month: string; income: number; expense: number }>>([]);
   const [budgetVsActual, setBudgetVsActual] = useState<Array<{ categoryName: string; budgeted: number; actual: number; remaining: number }>>([]);
-  const [anomalyDetectionResults, setAnomalyDetectionResults] = useState<any[]>([]);
+  const [anomalyDetectionResults, setAnomalyDetectionResults] = useState<Anomaly[]>([]);
   const [loading, setLoading] = useState(true);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -64,8 +73,9 @@ const ReportsPage: React.FC = () => {
       }
       const data = await response.json();
       setExpensesByCategory(data);
-    } catch (error: any) {
-      console.error('Error fetching expenses by category:', error.message);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error('Error fetching expenses by category:', message);
       toast.error('Erro ao buscar despesas por categoria.');
     } finally {
       setLoading(false);
@@ -100,8 +110,9 @@ const ReportsPage: React.FC = () => {
       }
       const data = await response.json();
       setIncomeExpenseOverTime(data);
-    } catch (error: any) {
-      console.error('Error fetching income/expense over time:', error.message);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error('Error fetching income/expense over time:', message);
       toast.error('Erro ao buscar dados de receita/despesa por tempo.');
     } finally {
       setLoading(false);
@@ -136,8 +147,9 @@ const ReportsPage: React.FC = () => {
       }
       const data = await response.json();
       setBudgetVsActual(data);
-    } catch (error: any) {
-      console.error('Error fetching budget vs actual:', error.message);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error('Error fetching budget vs actual:', message);
       toast.error('Erro ao buscar relatório de orçamento vs. real.');
     } finally {
       setLoading(false);
@@ -151,7 +163,6 @@ const ReportsPage: React.FC = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("User not authenticated");
 
-      // Fetch all transactions for anomaly detection
       const { data: transactions, error: transactionsError } = await supabase
         .from('transactions')
         .select('id, type, amount, date, description, category_id');
@@ -171,10 +182,11 @@ const ReportsPage: React.FC = () => {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
-      setAnomalyDetectionResults(data.filter((tx: any) => tx.is_anomaly));
+      setAnomalyDetectionResults(data.filter((tx: Anomaly) => tx.is_anomaly));
       toast.success('Detecção de anomalias concluída!');
-    } catch (error: any) {
-      console.error('Error running anomaly detection:', error.message);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error('Error running anomaly detection:', message);
       toast.error('Erro ao executar detecção de anomalias.');
     } finally {
       setLoading(false);
@@ -249,6 +261,40 @@ const ReportsPage: React.FC = () => {
     },
   };
 
+  const budgetVsActualChartData = {
+    labels: budgetVsActual.map(data => data.categoryName),
+    datasets: [
+      {
+        label: 'Orçado',
+        data: budgetVsActual.map(data => data.budgeted),
+        backgroundColor: 'rgba(54, 162, 235, 0.5)',
+      },
+      {
+        label: 'Real',
+        data: budgetVsActual.map(data => data.actual),
+        backgroundColor: 'rgba(255, 99, 132, 0.5)',
+      },
+    ],
+  };
+
+  const budgetVsActualChartOptions = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: 'top' as const,
+      },
+      title: {
+        display: true,
+        text: 'Orçamento vs. Real',
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+      },
+    },
+  };
+
   return (
     <Layout>
       <div className="container mx-auto p-4">
@@ -310,17 +356,6 @@ const ReportsPage: React.FC = () => {
         </div>
 
         <div className="bg-gray-800 p-6 rounded-lg shadow-lg mb-8">
-          <h2 className="text-2xl font-semibold text-white mb-4">Orçamento vs. Real</h2>
-          {loading ? (
-            <p className="text-white">Carregando dados do relatório...</p>
-          ) : budgetVsActual.length > 0 ? (
-            <Bar data={budgetVsActualChartData} options={budgetVsActualChartOptions} />
-          ) : (
-            <p className="text-white">Nenhum dado de orçamento vs. real encontrado para o período selecionado.</p>
-          )}
-        </div>
-
-        <div className="bg-gray-800 p-6 rounded-lg shadow-lg mb-8">
           <h2 className="text-2xl font-semibold text-white mb-4">Detecção de Anomalias</h2>
           <button
             onClick={runAnomalyDetection}
@@ -333,7 +368,7 @@ const ReportsPage: React.FC = () => {
             <div className="space-y-2">
               <p className="text-white">Anomalias detectadas:</p>
               <ul className="list-disc list-inside text-white">
-                {anomalyDetectionResults.map((anomaly: any) => (
+                {anomalyDetectionResults.map((anomaly) => (
                   <li key={anomaly.id}>
                     {anomaly.description || 'Transação'} de R$ {anomaly.amount} em {new Date(anomaly.date).toLocaleDateString()} (Score: {anomaly.anomaly_score})
                   </li>

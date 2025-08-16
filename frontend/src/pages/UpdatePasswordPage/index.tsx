@@ -32,7 +32,7 @@ const UpdatePasswordPage: React.FC = () => {
         toast.error(error.message);
       } else {
         toast.success('Senha atualizada com sucesso!');
-        navigate('/dashboard'); // Or navigate to login page
+        navigate('/dashboard');
       }
       setLoading(false);
     },

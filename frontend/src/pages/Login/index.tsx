@@ -116,6 +116,7 @@ const LoginPage: React.FC = () => {
             type="submit"
             disabled={formik.isSubmitting}
             className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 disabled:opacity-50 text-lg shadow-lg"
+            style={{ backgroundColor: 'blue', color: 'white', border: '2px solid red' }}
           >
             {formik.isSubmitting ? 'Entrando...' : 'Entrar'}
           </button>
